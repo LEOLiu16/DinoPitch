@@ -206,7 +206,6 @@ let playerFinalTimeMs = 0;
 const STORAGE_KEY = 'dinopitch_leaderboard';
 
 async function initFirebase() {
-    // 在 GitHub Pages 上不需要初始化遠端資料庫
     console.log("初始化本機排行榜系統");
 }
 
@@ -261,7 +260,6 @@ async function renderLeaderboard() {
     }
 
     const formContainer = document.getElementById('lb-form-container');
-    // 無論如何都開放輸入表單 (只要成績擠進前十名)
     if (currentLeaderboard.length < 10 || playerFinalTimeMs < currentLeaderboard[currentLeaderboard.length - 1].time) {
         formContainer.classList.remove('hidden');
     } else {
@@ -324,7 +322,7 @@ let isPlaying = false;
 let animationId;
 let gamePool = [];
 let osc = null;
-let buffer = new Float32Array(2048);
+let buffer = new Float32Array(4096); // 加大以強化低頻解析度
 
 let minMidi = 0;
 let maxMidi = 100;
@@ -350,7 +348,7 @@ let clouds = [];
 let player = { x: 0, y: 0, size: 56, isJumping: false, jumpT: 0, startX: 0, startY: 0, targetX: 0, targetY: 0 };
 let platforms = [];
 let cameraOffsetX = 0;
-const PLATFORM_WIDTH = 80; // 加寬一點讓文字更好看
+const PLATFORM_WIDTH = 80; 
 const PLATFORM_HEIGHT = 24; 
 
 let playMode = '1';
@@ -549,7 +547,7 @@ function autoCorrelate(buf, sampleRate) {
     let SIZE = buf.length, rms = 0;
     for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
     rms = Math.sqrt(rms / SIZE);
-    if (rms < 0.015) return -1;
+    if (rms < 0.008) return -1; // 降低雜音門檻，讓低頻(如E3)小聲時也容易被偵測
     let r1 = 0, r2 = SIZE - 1, thres = 0.2;
     for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
     for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
@@ -572,7 +570,6 @@ function playTargetTone() {
     osc = audioCtx.createOscillator();
     let gainNode = audioCtx.createGain();
     
-    // 改用 triangle 波，在手機小喇叭上聽得更清楚穿透力更強
     osc.type = 'triangle'; 
     
     let freqToPlay = isPlaying ? targetFreq : getFrequencyFromMidi((parseInt(document.getElementById('octave').value) + 1) * 12 + parseInt(document.getElementById('root-note').value));
@@ -580,7 +577,6 @@ function playTargetTone() {
     osc.connect(gainNode);
     gainNode.connect(audioCtx.destination);
     
-    // 將音量從 0.15 大幅提高到 0.6
     gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime); 
     
     osc.start();
@@ -608,15 +604,13 @@ async function startAudioAndGame() {
             throw new Error("您的瀏覽器環境不支援麥克風 (請確認是否使用 HTTPS 網址)");
         }
         
-        // 修正：用 microphone 變數來判斷是否真的成功連線，避免失敗後按重試直接放行
         if(!microphone) {
             if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
             
-            // 這行如果失敗，就不會往下執行
             let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
             
             analyser = audioCtx.createAnalyser(); 
-            analyser.fftSize = 2048;
+            analyser.fftSize = 4096;
             microphone = audioCtx.createMediaStreamSource(stream); 
             microphone.connect(analyser);
         }
@@ -736,7 +730,7 @@ function updatePhysics() {
             player.y = player.targetY;
             
             currentProgress++;
-            if (uiProgress) uiProgress.innerText = `${currentProgress}/15`;
+            if (uiProgress) uiProgress.innerText = `${currentProgress} / ${TOTAL_TARGETS}`;
             player.isJumping = false;
             
             if (currentProgress >= TOTAL_TARGETS) {
@@ -824,7 +818,7 @@ function draw() {
         let isElevator = (index === 0);
         let isTarget = p.isTarget;
         
-        // 經典瑪利歐配色：升降梯(金黃)、目標(亮綠)、一般平台(紅棕)
+        // 經典瑪利歐配色
         let topColor = isElevator ? '#fbd000' : (isTarget ? '#52d94a' : '#cc4c11');
         let bottomColor = isElevator ? '#e52521' : (isTarget ? '#166534' : '#8b3208');
         
@@ -870,7 +864,7 @@ function draw() {
         ctx.lineWidth = 2;
         ctx.stroke();
 
-        // 3D 邊緣高光與陰影 (增強復古立體感)
+        // 3D 邊緣高光與陰影
         ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
         ctx.fillRect(p.x, p.y, p.w, 3); // 上高光
         ctx.fillRect(p.x, p.y, 3, PLATFORM_HEIGHT); // 左高光
@@ -891,7 +885,22 @@ function draw() {
         ctx.font = 'bold 16px "Fredoka One", cursive';
         ctx.textAlign = 'center';
         ctx.textBaseline = 'middle';
-        let noteStr = getNoteName(p.midi);
+        
+        let noteStr = "";
+        // 核心邏輯：如果是升降梯，並且還沒起跳，則反向計算它當前物理 Y 座標所代表的音高
+        if (isElevator && !player.isJumping) {
+            let paddingTop = ch * 0.25;
+            let paddingBottom = ch * 0.8;
+            // 算出當前高度佔畫面的比例 (0 ~ 1)
+            let ratio = (paddingBottom - p.y) / (paddingBottom - paddingTop);
+            // 利用比例反推出視覺上的 MIDI 數值
+            let visualMidi = Math.round(minMidi + ratio * (maxMidi - minMidi));
+            noteStr = getNoteName(visualMidi);
+        } else {
+            // 其他普通的目標平台，直接顯示它們設定好的目標音名
+            noteStr = getNoteName(p.midi);
+        }
+        
         ctx.strokeText(noteStr, p.x + p.w / 2, p.y + PLATFORM_HEIGHT / 2);
         ctx.fillText(noteStr, p.x + p.w / 2, p.y + PLATFORM_HEIGHT / 2);
     });
