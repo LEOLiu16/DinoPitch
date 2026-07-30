@@ -200,62 +200,28 @@
 </div>
 
 <script type="module">
-import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
-import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
-
-let app, db, auth, user;
-let storageAvailable = false;
-const appId = typeof __app_id !== 'undefined' ? __app_id : 'dinopitch-default';
-
-async function initFirebase() {
-    try {
-        let firebaseConfig = {};
-        if (typeof __firebase_config !== 'undefined') {
-            firebaseConfig = JSON.parse(__firebase_config);
-        } else {
-            console.warn("No Firebase config found, leaderboard will be disabled.");
-            return;
-        }
-        app = initializeApp(firebaseConfig);
-        db = getFirestore(app);
-        auth = getAuth(app);
-        
-        if (typeof __initial_auth_token !== 'undefined') {
-            const cred = await signInWithCustomToken(auth, __initial_auth_token);
-            user = cred.user;
-        } else {
-            const cred = await signInAnonymously(auth);
-            user = cred.user;
-        }
-        storageAvailable = true;
-    } catch (e) {
-        console.warn("Firebase init failed, running in local mode.", e);
-    }
-}
-
+// 使用瀏覽器本機儲存 (Local Storage) 來替代 Firebase，讓 GitHub Pages 也能正常運作
 let currentLeaderboard = [];
 let playerFinalTimeMs = 0;
+const STORAGE_KEY = 'dinopitch_leaderboard';
 
-async function fetchLeaderboard() {
-    if (!storageAvailable || !user) return [];
+async function initFirebase() {
+    // 在 GitHub Pages 上不需要初始化遠端資料庫
+    console.log("初始化本機排行榜系統");
+}
+
+function fetchLeaderboard() {
     try {
-        const lbRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
-        const snapshot = await getDocs(lbRef);
-        let records = [];
+        let data = localStorage.getItem(STORAGE_KEY);
+        let records = data ? JSON.parse(data) : [];
         let currDifficulty = document.getElementById('difficulty').value;
         let currLevel = document.getElementById('play-mode').value;
         
-        snapshot.forEach(doc => {
-            const data = doc.data();
-            if (data.level === currLevel && data.difficulty === currDifficulty) {
-                records.push(data);
-            }
-        });
-        records.sort((a, b) => a.time - b.time);
-        return records.slice(0, 10);
+        let filtered = records.filter(r => r.level === currLevel && r.difficulty === currDifficulty);
+        filtered.sort((a, b) => a.time - b.time);
+        return filtered.slice(0, 10);
     } catch (e) {
-        console.error("Fetch LB error:", e);
+        console.error("讀取排行榜失敗:", e);
         return [];
     }
 }
@@ -266,7 +232,7 @@ async function renderLeaderboard() {
     titleEl.innerText = "排行榜 (載入中...)";
     listEl.innerHTML = '';
     
-    currentLeaderboard = await fetchLeaderboard();
+    currentLeaderboard = fetchLeaderboard();
     
     let diffSelect = document.getElementById('difficulty');
     let diffText = diffSelect.options[diffSelect.selectedIndex].text.split(' ')[1];
@@ -295,7 +261,8 @@ async function renderLeaderboard() {
     }
 
     const formContainer = document.getElementById('lb-form-container');
-    if (storageAvailable && (currentLeaderboard.length < 10 || playerFinalTimeMs < currentLeaderboard[currentLeaderboard.length - 1].time)) {
+    // 無論如何都開放輸入表單 (只要成績擠進前十名)
+    if (currentLeaderboard.length < 10 || playerFinalTimeMs < currentLeaderboard[currentLeaderboard.length - 1].time) {
         formContainer.classList.remove('hidden');
     } else {
         formContainer.classList.add('hidden');
@@ -311,18 +278,21 @@ document.getElementById('submit-score-btn').addEventListener('click', async () =
     btn.innerText = "送出中...";
     
     try {
-        if (storageAvailable && user) {
-            const lbRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
-            await addDoc(lbRef, {
-                name: name,
-                time: playerFinalTimeMs,
-                level: document.getElementById('play-mode').value,
-                difficulty: document.getElementById('difficulty').value,
-                timestamp: Date.now()
-            });
-            document.getElementById('lb-form-container').classList.add('hidden');
-            await renderLeaderboard();
-        }
+        let data = localStorage.getItem(STORAGE_KEY);
+        let records = data ? JSON.parse(data) : [];
+        
+        records.push({
+            name: name,
+            time: playerFinalTimeMs,
+            level: document.getElementById('play-mode').value,
+            difficulty: document.getElementById('difficulty').value,
+            timestamp: Date.now()
+        });
+        
+        localStorage.setItem(STORAGE_KEY, JSON.stringify(records));
+        
+        document.getElementById('lb-form-container').classList.add('hidden');
+        await renderLeaderboard();
     } catch(e) {
         console.error(e);
     } finally {
