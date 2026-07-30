@@ -1,0 +1,943 @@
+<!DOCTYPE html>
+<html lang="zh-TW">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no, viewport-fit=cover">
+    <title>🦖 DinoPitch 走音暴龍</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; overflow: hidden; background-color: #1a202c; touch-action: none; font-family: 'Noto Sans TC', sans-serif; }
+        h1, h2, h3, .title-font { font-family: 'Fredoka One', cursive; }
+        
+        #game-container { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
+        
+        /* UI Overlay with Dark transparent background */
+        #setup-screen, #victory-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; background: rgba(15, 23, 42, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; color: white; padding: 20px; overflow-y: auto;}
+        .hidden { display: none !important; }
+        
+        /* Game UI Top - Auto sizing */
+        #game-ui { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: env(safe-area-inset-top, 10px) 0 15px 0; background: linear-gradient(to bottom, #1e3a8a, #2b6cb0); color: white; z-index: 10; border-bottom: 4px solid #1e40af; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); }
+        
+        /* Timer, Progress, and Back Button UI */
+        .status-header { display: flex; justify-content: space-between; align-items: center; width: 95%; max-width: 450px; margin-bottom: 8px; }
+        .timer-text { font-size: 1.1rem; font-weight: bold; color: #fbd000; font-family: 'Courier New', Courier, monospace; text-shadow: 1px 1px 2px black;}
+        .progress-text { font-size: 1.1rem; font-weight: bold; color: #52d94a; font-family: 'Courier New', Courier, monospace; text-shadow: 1px 1px 2px black;}
+        .back-btn { background: #e52521; color: #fff; border: 2px solid #8b0000; padding: 4px 10px; border-radius: 6px; font-size: 0.85rem; font-weight: bold; box-shadow: 0 2px 4px rgba(0,0,0,0.3); transition: transform 0.1s; }
+        .back-btn:active { transform: translateY(2px); }
+
+        /* Tuner */
+        .tuner-container { width: 90%; max-width: 400px; position: relative; height: 16px; background: rgba(0,0,0,0.4); border-radius: 8px; margin-top: 10px; overflow: hidden; border: 2px solid #1e40af; }
+        .tuner-center { position: absolute; left: 50%; top: 0; bottom: 0; width: 2px; background: #52d94a; z-index: 2; transform: translateX(-50%); }
+        .tuner-safe-zone { position: absolute; left: 40%; width: 20%; top: 0; bottom: 0; background: rgba(82, 217, 74, 0.4); z-index: 1; transition: width 0.3s, left 0.3s; }
+        .tuner-indicator { position: absolute; top: 50%; width: 10px; height: 14px; background: #fbd000; border-radius: 4px; transform: translate(-50%, -50%); transition: left 0.1s ease-out; z-index: 3; left: 50%; border: 1px solid black;}
+        
+        /* Charge Bar */
+        .charge-container { width: 90%; max-width: 400px; height: 12px; background: rgba(0,0,0,0.4); border-radius: 6px; margin-top: 8px; overflow: hidden; border: 1px solid #1e40af; }
+        .charge-fill { height: 100%; width: 0%; background: #52d94a; transition: width 0.1s linear; }
+
+        /* Canvas - Mario Sky Blue */
+        #game-canvas { flex: 1; width: 100%; display: block; background-color: #5c94fc; }
+        
+        select, input[type="checkbox"] { accent-color: #52d94a; }
+        #hint-btn { touch-action: none; user-select: none; -webkit-user-select: none; }
+        
+        /* Scrollbar hide for leaderboard */
+        .scrollbar-hide::-webkit-scrollbar { display: none; }
+        .scrollbar-hide { -ms-overflow-style: none; scrollbar-width: none; }
+    </style>
+</head>
+<body>
+
+<div id="game-container">
+    
+    <!-- 設定畫面 -->
+    <div id="setup-screen">
+        <h1 class="text-4xl mb-1 text-white title-font drop-shadow-md"><span style="display: inline-block; transform: scaleX(-1);">🦖</span> DinoPitch</h1>
+        <h2 class="text-2xl mb-4 text-green-400 title-font drop-shadow-md">走音暴龍</h2>
+        
+        <div class="bg-gray-800 p-5 rounded-xl w-full max-w-sm space-y-3 shadow-[0_8px_0_#1f2937] border-2 border-gray-600">
+            <div class="flex space-x-2">
+                <div class="flex-1">
+                    <label class="block text-gray-300 text-xs mb-1 font-bold">基準根音 (Root)</label>
+                    <select id="root-note" class="w-full p-2 text-sm bg-gray-700 text-white rounded outline-none border border-gray-600 focus:border-green-400 font-bold">
+                        <option value="0">C</option>
+                        <option value="1">C# / Db</option>
+                        <option value="2">D</option>
+                        <option value="3">D# / Eb</option>
+                        <option value="4">E</option>
+                        <option value="5">F</option>
+                        <option value="6">F# / Gb</option>
+                        <option value="7">G</option>
+                        <option value="8">G# / Ab</option>
+                        <option value="9">A</option>
+                        <option value="10">A# / Bb</option>
+                        <option value="11">B</option>
+                    </select>
+                </div>
+                <div class="flex-1">
+                    <label class="block text-gray-300 text-xs mb-1 font-bold">八度 (Octave)</label>
+                    <select id="octave" class="w-full p-2 text-sm bg-gray-700 text-white rounded outline-none border border-gray-600 focus:border-green-400 font-bold">
+                        <option value="2">2 (男低)</option>
+                        <option value="3" selected>3 (男高/女低)</option>
+                        <option value="4">4 (女高)</option>
+                        <option value="5">5 (超高)</option>
+                    </select>
+                </div>
+            </div>
+
+            <div class="flex space-x-2">
+                <div class="flex-1">
+                    <label class="block text-yellow-300 text-xs mb-1 font-bold">難度等級 (Tolerance)</label>
+                    <select id="difficulty" class="w-full p-2 text-sm bg-gray-700 text-white rounded outline-none border border-gray-600 focus:border-green-400 font-bold">
+                        <option value="50">1. 我是素人</option>
+                        <option value="40">2. KTV之王</option>
+                        <option value="30" selected>3. 街頭藝人 </option>
+                        <option value="20">4. 錄音室等級</option>
+                        <option value="10">5. 專業歌手 </option>
+                    </select>
+                </div>
+            </div>
+            
+            <div>
+                <label class="block text-green-300 text-xs mb-1 font-bold">關卡選擇 (Level)</label>
+                <select id="play-mode" class="w-full p-2 text-sm bg-gray-700 text-white rounded outline-none border border-gray-600 focus:border-green-400 font-bold">
+                    <option value="1" selected>Level 1: 上行下行</option>
+                    <option value="2">Level 2: 峰迴路轉</option>
+                    <option value="3">Level 3: 瘋狂跳躍</option>
+                </select>
+            </div>
+            
+            <div>
+                <label class="block text-gray-300 text-xs mb-1 font-bold border-b border-gray-600 pb-1">題庫範圍 (可多選)</label>
+                <div class="space-y-1 mt-2 text-sm font-bold">
+                    <label class="flex items-center space-x-2"><input type="checkbox" id="scale-major" class="w-4 h-4 rounded"> <span class="text-gray-100">自然大調 (Major)</span></label>
+                    <label class="flex items-center space-x-2"><input type="checkbox" id="scale-major-penta" checked class="w-4 h-4 rounded"> <span class="text-blue-300">大調五聲 (Major Penta)</span></label>
+                    <label class="flex items-center space-x-2"><input type="checkbox" id="scale-minor" class="w-4 h-4 rounded"> <span class="text-gray-100">自然小調 (Minor)</span></label>
+                    <label class="flex items-center space-x-2"><input type="checkbox" id="scale-minor-penta" class="w-4 h-4 rounded"> <span class="text-red-300">小調五聲 (Minor Penta)</span></label>
+                    <label class="flex items-center space-x-2"><input type="checkbox" id="scale-blues" class="w-4 h-4 rounded"> <span class="text-purple-300">小調藍調 (Minor Blues)</span></label>
+                </div>
+            </div>
+        </div>
+        <button id="start-btn" class="mt-8 bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-10 rounded-full text-lg shadow-[0_6px_0_#166534] transform transition active:translate-y-2 active:shadow-[0_0px_0_#166534] title-font border-2 border-green-800 tracking-wider">
+            允許麥克風並開始
+        </button>
+        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">Design by 劉文傑</p>
+    </div>
+
+    <!-- 勝利通關與排行榜畫面 -->
+    <div id="victory-screen" class="hidden">
+        <h1 class="text-4xl text-yellow-400 mb-1 drop-shadow-[0_4px_4px_rgba(0,0,0,0.8)] title-font">🎉 通關成功！</h1>
+        <p class="text-lg text-white font-bold mb-4 font-mono drop-shadow-md">成績時間: <span id="final-time" class="text-green-400 title-font text-2xl">00:00.00</span></p>
+        
+        <!-- Leaderboard Form -->
+        <div id="lb-form-container" class="hidden bg-gray-800 p-4 rounded-xl w-full max-w-sm mb-4 shadow-lg border-2 border-yellow-500">
+            <p class="text-yellow-300 font-bold mb-2 text-sm text-center">🏆 恭喜擠進該難度前 10 名！留個名吧</p>
+            <div class="flex space-x-2">
+                <input type="text" id="player-name" placeholder="輸入您的大名" class="flex-1 p-2 rounded text-black font-bold outline-none border-2 border-gray-400 focus:border-green-500" maxlength="10">
+                <button id="submit-score-btn" class="bg-green-500 hover:bg-green-400 px-4 py-2 rounded text-white font-bold shadow-[0_4px_0_#166534] active:translate-y-1 active:shadow-none transition-all">送出</button>
+            </div>
+        </div>
+
+        <!-- Leaderboard Display -->
+        <div id="lb-display-container" class="bg-gray-800 p-3 rounded-xl w-full max-w-sm mb-6 border-2 border-gray-600 shadow-lg">
+            <h3 id="lb-title" class="text-sm text-green-300 font-bold mb-2 text-center border-b border-gray-600 pb-2">排行榜 (載入中...)</h3>
+            <div class="overflow-y-auto max-h-40 scrollbar-hide w-full">
+                <table class="w-full text-left text-gray-300 text-sm font-bold">
+                    <thead class="text-xs uppercase bg-gray-700 text-gray-400 sticky top-0">
+                        <tr>
+                            <th class="px-2 py-1 rounded-tl">名次</th>
+                            <th class="px-2 py-1">玩家</th>
+                            <th class="px-2 py-1 text-right rounded-tr">時間</th>
+                        </tr>
+                    </thead>
+                    <tbody id="lb-list">
+                    </tbody>
+                </table>
+            </div>
+        </div>
+
+        <div class="flex space-x-4">
+            <button id="restart-btn" class="bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-6 rounded-full shadow-[0_4px_0_#166534] active:translate-y-1 active:shadow-none border-2 border-green-800">再挑戰</button>
+            <button id="settings-btn" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-3 px-6 rounded-full shadow-[0_4px_0_#374151] active:translate-y-1 active:shadow-none border-2 border-gray-800">回設定</button>
+        </div>
+        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">Designer 劉文傑</p>
+    </div>
+
+    <!-- 遊戲中上半部 UI -->
+    <div id="game-ui">
+        <div class="status-header">
+            <button id="back-btn" class="back-btn">⬅️ 返回</button>
+            <div class="flex space-x-4 items-center">
+                <span>⏱️ <span id="timer-display" class="timer-text">00:00.00</span></span>
+                <span>🏁 <span id="progress-display" class="progress-text">0/15</span></span>
+            </div>
+        </div>
+        
+        <div class="text-center relative mt-1">
+            <div class="flex items-center justify-center space-x-4">
+                <h2 id="target-note-display" class="text-4xl text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] title-font w-20 text-center">C4</h2>
+                <button id="hint-btn" class="bg-yellow-400 hover:bg-yellow-300 text-xl p-2 rounded-full shadow-[0_4px_0_#b45309] border-2 border-yellow-700 active:translate-y-1 active:shadow-none transition-all" title="長按聽提示音">🔊</button>
+            </div>
+            <p class="text-[10px] text-gray-300 mt-1 absolute -bottom-4 left-0 w-full text-center font-bold">長按🔊對音準</p>
+        </div>
+
+        <div class="tuner-container mt-5">
+            <div id="tuner-safe-zone" class="tuner-safe-zone"></div>
+            <div class="tuner-center"></div>
+            <div id="tuner-indicator" class="tuner-indicator"></div>
+        </div>
+
+        <div class="charge-container">
+            <div id="charge-fill" class="charge-fill"></div>
+        </div>
+        <p class="text-xs text-yellow-300 mt-1 h-3 font-bold drop-shadow-md" id="status-text">唱出聲音，控制升降梯！</p>
+    </div>
+
+    <!-- 遊戲畫面 -->
+    <canvas id="game-canvas"></canvas>
+
+</div>
+
+<script type="module">
+import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
+import { getAuth, signInAnonymously, signInWithCustomToken } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
+import { getFirestore, collection, addDoc, getDocs } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+
+let app, db, auth, user;
+let storageAvailable = false;
+const appId = typeof __app_id !== 'undefined' ? __app_id : 'dinopitch-default';
+
+async function initFirebase() {
+    try {
+        let firebaseConfig = {};
+        if (typeof __firebase_config !== 'undefined') {
+            firebaseConfig = JSON.parse(__firebase_config);
+        } else {
+            console.warn("No Firebase config found, leaderboard will be disabled.");
+            return;
+        }
+        app = initializeApp(firebaseConfig);
+        db = getFirestore(app);
+        auth = getAuth(app);
+        
+        if (typeof __initial_auth_token !== 'undefined') {
+            const cred = await signInWithCustomToken(auth, __initial_auth_token);
+            user = cred.user;
+        } else {
+            const cred = await signInAnonymously(auth);
+            user = cred.user;
+        }
+        storageAvailable = true;
+    } catch (e) {
+        console.warn("Firebase init failed, running in local mode.", e);
+    }
+}
+
+let currentLeaderboard = [];
+let playerFinalTimeMs = 0;
+
+async function fetchLeaderboard() {
+    if (!storageAvailable || !user) return [];
+    try {
+        const lbRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+        const snapshot = await getDocs(lbRef);
+        let records = [];
+        let currDifficulty = document.getElementById('difficulty').value;
+        let currLevel = document.getElementById('play-mode').value;
+        
+        snapshot.forEach(doc => {
+            const data = doc.data();
+            if (data.level === currLevel && data.difficulty === currDifficulty) {
+                records.push(data);
+            }
+        });
+        records.sort((a, b) => a.time - b.time);
+        return records.slice(0, 10);
+    } catch (e) {
+        console.error("Fetch LB error:", e);
+        return [];
+    }
+}
+
+async function renderLeaderboard() {
+    const listEl = document.getElementById('lb-list');
+    const titleEl = document.getElementById('lb-title');
+    titleEl.innerText = "排行榜 (載入中...)";
+    listEl.innerHTML = '';
+    
+    currentLeaderboard = await fetchLeaderboard();
+    
+    let diffSelect = document.getElementById('difficulty');
+    let diffText = diffSelect.options[diffSelect.selectedIndex].text.split(' ')[1];
+    let levelSelect = document.getElementById('play-mode');
+    let levelText = levelSelect.options[levelSelect.selectedIndex].text.split(':')[0];
+    
+    titleEl.innerText = `🏆 排行榜 (${levelText} / ${diffText})`;
+    
+    if (currentLeaderboard.length === 0) {
+        listEl.innerHTML = '<tr><td colspan="3" class="text-center text-gray-500 py-4">目前尚無紀錄，成為第一位吧！</td></tr>';
+    } else {
+        currentLeaderboard.forEach((record, index) => {
+            let tr = document.createElement('tr');
+            tr.className = "border-b border-gray-700 last:border-0 hover:bg-gray-700 transition-colors";
+            
+            let rankColor = index === 0 ? "text-yellow-400" : (index === 1 ? "text-gray-300" : (index === 2 ? "text-yellow-600" : "text-gray-500"));
+            let rankIcon = index < 3 ? '★' : `${index + 1}.`;
+            
+            tr.innerHTML = `
+                <td class="px-2 py-2 ${rankColor} font-black">${rankIcon}</td>
+                <td class="px-2 py-2 text-white">${record.name}</td>
+                <td class="px-2 py-2 text-right text-green-400 font-mono">${formatTime(record.time)}</td>
+            `;
+            listEl.appendChild(tr);
+        });
+    }
+
+    const formContainer = document.getElementById('lb-form-container');
+    if (storageAvailable && (currentLeaderboard.length < 10 || playerFinalTimeMs < currentLeaderboard[currentLeaderboard.length - 1].time)) {
+        formContainer.classList.remove('hidden');
+    } else {
+        formContainer.classList.add('hidden');
+    }
+}
+
+document.getElementById('submit-score-btn').addEventListener('click', async () => {
+    const nameInput = document.getElementById('player-name');
+    const name = nameInput.value.trim() || "神秘歌手";
+    
+    const btn = document.getElementById('submit-score-btn');
+    btn.disabled = true;
+    btn.innerText = "送出中...";
+    
+    try {
+        if (storageAvailable && user) {
+            const lbRef = collection(db, 'artifacts', appId, 'public', 'data', 'leaderboard');
+            await addDoc(lbRef, {
+                name: name,
+                time: playerFinalTimeMs,
+                level: document.getElementById('play-mode').value,
+                difficulty: document.getElementById('difficulty').value,
+                timestamp: Date.now()
+            });
+            document.getElementById('lb-form-container').classList.add('hidden');
+            await renderLeaderboard();
+        }
+    } catch(e) {
+        console.error(e);
+    } finally {
+        btn.disabled = false;
+        btn.innerText = "送出";
+    }
+});
+
+const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+const SCALE_INTERVALS = {
+    'major': [0, 2, 4, 5, 7, 9, 11],
+    'major-penta': [0, 2, 4, 7, 9],
+    'minor': [0, 2, 3, 5, 7, 8, 10],
+    'minor-penta': [0, 3, 5, 7, 10],
+    'blues': [0, 3, 5, 6, 7, 10]
+};
+
+function getNoteName(midiNumber) {
+    const note = NOTE_NAMES[midiNumber % 12];
+    const octave = Math.floor(midiNumber / 12) - 1;
+    return `${note}${octave}`;
+}
+
+function getFrequencyFromMidi(midi) { return 440 * Math.pow(2, (midi - 69) / 12); }
+function getMidiFromFrequency(freq) { return Math.round(12 * (Math.log2(freq / 440)) + 69); }
+
+let audioCtx, analyser, microphone;
+let isPlaying = false;
+let animationId;
+let gamePool = [];
+let osc = null;
+let buffer = new Float32Array(2048);
+
+let minMidi = 0;
+let maxMidi = 100;
+let pixelPerSemitone = 20; 
+
+const TOTAL_TARGETS = 15;
+let currentProgress = 0;
+let startTime = 0;
+let isFinished = false;
+
+let targetMidi = 60;
+let targetFreq = 261.63;
+let holdFrames = 0;
+const MAX_HOLD_FRAMES = 35; 
+let centsTolerance = 30; // 難度動態更新
+
+const canvas = document.getElementById('game-canvas');
+const ctx = canvas.getContext('2d');
+let cw, ch;
+let bgOffsetY = 0; 
+let clouds = [];
+
+let player = { x: 0, y: 0, size: 56, isJumping: false, jumpT: 0, startX: 0, startY: 0, targetX: 0, targetY: 0 };
+let platforms = [];
+let cameraOffsetX = 0;
+const PLATFORM_WIDTH = 80; // 加寬一點讓文字更好看
+const PLATFORM_HEIGHT = 24; 
+
+let playMode = '1';
+let scaleIndex = 0;
+let scaleDir = 1;
+
+let setupScreen, victoryScreen, startBtn, restartBtn, settingsBtn, backBtn;
+let uiTargetNote, uiTimer, uiProgress, uiFinalTime, tunerIndicator, tunerSafeZone, chargeFill, statusText, hintBtn;
+
+window.addEventListener('DOMContentLoaded', async () => {
+    await initFirebase();
+    
+    setupScreen = document.getElementById('setup-screen');
+    victoryScreen = document.getElementById('victory-screen');
+    startBtn = document.getElementById('start-btn');
+    restartBtn = document.getElementById('restart-btn');
+    settingsBtn = document.getElementById('settings-btn');
+    backBtn = document.getElementById('back-btn');
+    
+    uiTargetNote = document.getElementById('target-note-display');
+    uiTimer = document.getElementById('timer-display');
+    uiProgress = document.getElementById('progress-display');
+    uiFinalTime = document.getElementById('final-time');
+    
+    tunerIndicator = document.getElementById('tuner-indicator');
+    tunerSafeZone = document.getElementById('tuner-safe-zone');
+    chargeFill = document.getElementById('charge-fill');
+    statusText = document.getElementById('status-text');
+    hintBtn = document.getElementById('hint-btn');
+
+    if (startBtn) startBtn.addEventListener('click', startAudioAndGame);
+    if (restartBtn) restartBtn.addEventListener('click', initGame);
+    if (settingsBtn) settingsBtn.addEventListener('click', () => { 
+        if (victoryScreen) victoryScreen.classList.add('hidden'); 
+        if (setupScreen) setupScreen.classList.remove('hidden'); 
+    });
+    
+    if (backBtn) backBtn.addEventListener('click', () => {
+        isPlaying = false;
+        isFinished = true;
+        cancelAnimationFrame(animationId);
+        stopTargetTone();
+        setupScreen.classList.remove('hidden');
+    });
+
+    if (hintBtn) {
+        hintBtn.addEventListener('mousedown', playTargetTone);
+        hintBtn.addEventListener('touchstart', (e) => { e.preventDefault(); playTargetTone(); }, { passive: false });
+        hintBtn.addEventListener('mouseleave', stopTargetTone);
+    }
+    window.addEventListener('mouseup', stopTargetTone);
+    window.addEventListener('touchend', stopTargetTone);
+
+    resize();
+});
+
+function resize() {
+    if (!canvas) return;
+    canvas.width = canvas.clientWidth;
+    canvas.height = canvas.clientHeight;
+    cw = canvas.width;
+    ch = canvas.height;
+}
+window.addEventListener('resize', resize);
+
+function generatePool() {
+    const root = parseInt(document.getElementById('root-note').value);
+    const octave = parseInt(document.getElementById('octave').value);
+    const rootMidi = (octave + 1) * 12 + root;
+    
+    gamePool = [];
+    if(document.getElementById('scale-major').checked) SCALE_INTERVALS['major'].forEach(i => gamePool.push(rootMidi + i));
+    if(document.getElementById('scale-major-penta').checked) SCALE_INTERVALS['major-penta'].forEach(i => gamePool.push(rootMidi + i));
+    if(document.getElementById('scale-minor').checked) SCALE_INTERVALS['minor'].forEach(i => gamePool.push(rootMidi + i));
+    if(document.getElementById('scale-minor-penta').checked) SCALE_INTERVALS['minor-penta'].forEach(i => gamePool.push(rootMidi + i));
+    if(document.getElementById('scale-blues').checked) SCALE_INTERVALS['blues'].forEach(i => gamePool.push(rootMidi + i));
+        
+    gamePool = [...new Set(gamePool)].sort((a,b) => a-b);
+    if(gamePool.length === 0) {
+        document.getElementById('scale-major-penta').checked = true;
+        SCALE_INTERVALS['major-penta'].forEach(i => gamePool.push(rootMidi + i));
+    }
+    
+    minMidi = gamePool[0];
+    maxMidi = gamePool[gamePool.length - 1];
+    if(maxMidi === minMidi) maxMidi = minMidi + 12; 
+    
+    pixelPerSemitone = (ch * 0.45) / Math.max(12, maxMidi - minMidi);
+}
+
+function getPlatformY(midi) {
+    const paddingTop = ch * 0.25; 
+    const paddingBottom = ch * 0.8; 
+    const ratio = (midi - minMidi) / (maxMidi - minMidi);
+    return paddingBottom - (ratio * (paddingBottom - paddingTop));
+}
+
+function getNextNoteLogic(lastIdx) {
+    let nextIdx = lastIdx;
+    
+    if (playMode === '1') {
+        nextIdx = lastIdx + scaleDir;
+        if (nextIdx >= gamePool.length) { scaleDir = -1; nextIdx = lastIdx - 1; } 
+        else if (nextIdx < 0) { scaleDir = 1; nextIdx = lastIdx + 1; }
+    } else if (playMode === '2') {
+        let dir = Math.random() < 0.5 ? 1 : -1;
+        nextIdx = lastIdx + dir;
+        if (nextIdx >= gamePool.length) nextIdx = lastIdx - 1;
+        if (nextIdx < 0) nextIdx = lastIdx + 1;
+    } else {
+        do { nextIdx = Math.floor(Math.random() * gamePool.length); } while (nextIdx === lastIdx && gamePool.length > 1);
+    }
+    
+    nextIdx = Math.max(0, Math.min(gamePool.length - 1, nextIdx));
+    return { midi: gamePool[nextIdx], poolIdx: nextIdx };
+}
+
+function updateTargetNoteUI() {
+    if (platforms.length < 2) return;
+    targetMidi = platforms[1].midi;
+    targetFreq = getFrequencyFromMidi(targetMidi);
+    if (uiTargetNote) uiTargetNote.innerText = getNoteName(targetMidi);
+}
+
+function formatTime(ms) {
+    let totalSeconds = Math.floor(ms / 1000);
+    let minutes = Math.floor(totalSeconds / 60);
+    let seconds = totalSeconds % 60;
+    let milliseconds = Math.floor((ms % 1000) / 10);
+    return `${minutes.toString().padStart(2, '0')}:${seconds.toString().padStart(2, '0')}.${milliseconds.toString().padStart(2, '0')}`;
+}
+
+function initClouds() {
+    clouds = [];
+    for(let i=0; i<6; i++) {
+        clouds.push({ x: Math.random() * cw * 1.5, y: Math.random() * ch * 0.5, s: 0.6 + Math.random() * 1.2, speed: 0.2 + Math.random() * 0.4 });
+    }
+}
+
+function initGame() {
+    resize();
+    initClouds();
+    currentProgress = 0;
+    if (uiProgress) uiProgress.innerText = `${currentProgress} / ${TOTAL_TARGETS}`;
+    holdFrames = 0;
+    cameraOffsetX = 0;
+    bgOffsetY = 0;
+    isFinished = false;
+    
+    let diffSelect = document.getElementById('difficulty');
+    centsTolerance = parseInt(diffSelect.value);
+    
+    if (tunerSafeZone) {
+        let safeWidthPercent = (centsTolerance / 150) * 100;
+        tunerSafeZone.style.width = `${safeWidthPercent}%`;
+        tunerSafeZone.style.left = `${50 - (safeWidthPercent/2)}%`;
+    }
+    
+    playMode = document.getElementById('play-mode').value;
+    scaleDir = 1;
+    
+    generatePool();
+    
+    platforms = [];
+    let currentX = cw * 0.2;
+    let rootIdx = 0; 
+    let rootMidi = gamePool[rootIdx]; 
+    
+    platforms.push({ x: currentX, y: getPlatformY(rootMidi), currentElevatorY: getPlatformY(rootMidi), w: PLATFORM_WIDTH, isTarget: false, midi: rootMidi, poolIdx: rootIdx });
+    
+    currentX += 160 + Math.random()*30;
+    platforms.push({ x: currentX, y: getPlatformY(rootMidi), w: PLATFORM_WIDTH, isTarget: true, midi: rootMidi, poolIdx: rootIdx });
+    
+    for (let i = 2; i <= 4; i++) {
+        currentX += 160 + Math.random()*30;
+        let lastIdx = platforms[platforms.length - 1].poolIdx;
+        let next = getNextNoteLogic(lastIdx);
+        platforms.push({ x: currentX, y: getPlatformY(next.midi), w: PLATFORM_WIDTH, isTarget: false, midi: next.midi, poolIdx: next.poolIdx });
+    }
+    
+    player.x = platforms[0].x + platforms[0].w/2;
+    player.y = platforms[0].y;
+    player.isJumping = false;
+    
+    updateTargetNoteUI();
+    
+    startTime = Date.now();
+    isPlaying = true;
+    if (setupScreen) setupScreen.classList.add('hidden');
+    if (victoryScreen) victoryScreen.classList.add('hidden');
+    
+    loop();
+}
+
+function autoCorrelate(buf, sampleRate) {
+    let SIZE = buf.length, rms = 0;
+    for (let i = 0; i < SIZE; i++) rms += buf[i] * buf[i];
+    rms = Math.sqrt(rms / SIZE);
+    if (rms < 0.015) return -1;
+    let r1 = 0, r2 = SIZE - 1, thres = 0.2;
+    for (let i = 0; i < SIZE / 2; i++) if (Math.abs(buf[i]) < thres) { r1 = i; break; }
+    for (let i = 1; i < SIZE / 2; i++) if (Math.abs(buf[SIZE - i]) < thres) { r2 = SIZE - i; break; }
+    buf = buf.slice(r1, r2); SIZE = buf.length;
+    let c = new Array(SIZE).fill(0);
+    for (let i = 0; i < SIZE; i++) for (let j = 0; j < SIZE - i; j++) c[i] = c[i] + buf[j] * buf[j + i];
+    let d = 0; while (c[d] > c[d + 1]) d++;
+    let maxval = -1, maxpos = -1;
+    for (let i = d; i < SIZE; i++) { if (c[i] > maxval) { maxval = c[i]; maxpos = i; } }
+    let T0 = maxpos, x1 = c[T0 - 1], x2 = c[T0], x3 = c[T0 + 1];
+    let a = (x1 + x3 - 2 * x2) / 2, b = (x3 - x1) / 2;
+    if (a) T0 = T0 - b / (2 * a);
+    return sampleRate / T0;
+}
+
+function playTargetTone() {
+    if (!audioCtx) return;
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    if (osc) osc.stop();
+    osc = audioCtx.createOscillator();
+    let gainNode = audioCtx.createGain();
+    
+    // 改用 triangle 波，在手機小喇叭上聽得更清楚穿透力更強
+    osc.type = 'triangle'; 
+    
+    let freqToPlay = isPlaying ? targetFreq : getFrequencyFromMidi((parseInt(document.getElementById('octave').value) + 1) * 12 + parseInt(document.getElementById('root-note').value));
+    osc.frequency.value = freqToPlay;
+    osc.connect(gainNode);
+    gainNode.connect(audioCtx.destination);
+    
+    // 將音量從 0.15 大幅提高到 0.6
+    gainNode.gain.setValueAtTime(0.6, audioCtx.currentTime); 
+    
+    osc.start();
+    if (isPlaying && hintBtn) hintBtn.classList.add('bg-yellow-200', 'border-yellow-400');
+}
+
+function stopTargetTone() {
+    if (osc) { osc.stop(); osc.disconnect(); osc = null; }
+    if (isPlaying && hintBtn) hintBtn.classList.remove('bg-yellow-200', 'border-yellow-400');
+}
+
+async function startAudioAndGame() {
+    let startBtn = document.getElementById('start-btn');
+    if (startBtn) { startBtn.disabled = true; startBtn.innerText = "連線中..."; }
+    
+    let msg = document.getElementById('mic-status-msg');
+    if (msg) {
+        msg.innerText = "請允許麥克風存取權限...";
+        msg.classList.remove('text-red-400');
+        msg.classList.add('text-yellow-400', 'font-bold');
+    }
+    
+    try {
+        if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+            throw new Error("您的瀏覽器環境不支援麥克風 (請確認是否使用 HTTPS 網址)");
+        }
+        
+        // 修正：用 microphone 變數來判斷是否真的成功連線，避免失敗後按重試直接放行
+        if(!microphone) {
+            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            
+            // 這行如果失敗，就不會往下執行
+            let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
+            
+            analyser = audioCtx.createAnalyser(); 
+            analyser.fftSize = 2048;
+            microphone = audioCtx.createMediaStreamSource(stream); 
+            microphone.connect(analyser);
+        }
+        if (audioCtx.state === 'suspended') await audioCtx.resume();
+        initGame();
+        if (startBtn) { startBtn.disabled = false; startBtn.innerText = "允許麥克風並開始"; }
+    } catch (err) {
+        if (msg) { 
+            msg.innerHTML = "🎤 麥克風存取失敗！<br>請確認您是使用 <b>https://</b> 的安全網址開啟，而非本地 file:// 檔案。"; 
+            msg.classList.remove('text-yellow-400');
+            msg.classList.add('text-red-400', 'font-bold', 'text-sm');
+        }
+        if (startBtn) { startBtn.disabled = false; startBtn.innerText = "重試"; }
+        console.error(err);
+    }
+}
+
+function loop() {
+    if (!isPlaying) return;
+    animationId = requestAnimationFrame(loop);
+    
+    if (!isFinished && uiTimer) {
+        uiTimer.innerText = formatTime(Date.now() - startTime);
+    }
+    
+    updateAudio();
+    updatePhysics();
+    draw();
+}
+
+function updateAudio() {
+    if (player.isJumping || isFinished) {
+        if (chargeFill) chargeFill.style.width = '0%';
+        if (tunerIndicator) { tunerIndicator.style.left = '50%'; tunerIndicator.style.backgroundColor = '#fbd000'; }
+        if (statusText) { statusText.innerText = player.isJumping ? "飛躍中！" : "過關！"; statusText.className = "text-xs mt-1 h-3 font-bold text-gray-200 drop-shadow-md"; }
+        return;
+    }
+
+    analyser.getFloatTimeDomainData(buffer);
+    let pitch = autoCorrelate(buffer, audioCtx.sampleRate);
+    let elevator = platforms[0];
+    let target = platforms[1];
+    
+    if (pitch !== -1) {
+        let centsOff = 1200 * Math.log2(pitch / targetFreq);
+        let displayCents = Math.max(-150, Math.min(150, centsOff));
+        
+        if (tunerIndicator) tunerIndicator.style.left = `${50 + (displayCents / 150) * 50}%`;
+        
+        let heightOffset = (centsOff / 100) * pixelPerSemitone;
+        let targetElevatorY = target.y - heightOffset;
+        
+        targetElevatorY = Math.max(ch * 0.15, Math.min(ch * 0.9, targetElevatorY));
+        elevator.currentElevatorY = targetElevatorY;
+
+        if (Math.abs(centsOff) <= centsTolerance) {
+            if (tunerIndicator) tunerIndicator.style.backgroundColor = '#52d94a';
+            holdFrames++;
+            if (statusText) { statusText.innerText = "保持高度！準備跳躍！"; statusText.className = "text-xs mt-1 h-3 font-bold text-green-300 drop-shadow-md"; }
+        } else {
+            if (tunerIndicator) tunerIndicator.style.backgroundColor = Math.abs(centsOff) <= 100 ? '#fbd000' : '#e52521';
+            holdFrames = Math.max(0, holdFrames - 2);
+            if (statusText) { statusText.innerText = centsOff > 0 ? "太高了，降落一點" : "太低了，升上去"; statusText.className = "text-xs mt-1 h-3 font-bold text-yellow-300 drop-shadow-md"; }
+        }
+    } else {
+        holdFrames = Math.max(0, holdFrames - 4);
+        elevator.currentElevatorY = Math.min(ch * 0.9, elevator.y + 3); 
+        if (tunerIndicator) { tunerIndicator.style.left = '50%'; tunerIndicator.style.backgroundColor = '#fbd000'; }
+        if (statusText) { statusText.innerText = "發出聲音控制升降梯"; statusText.className = "text-xs mt-1 h-3 font-bold text-gray-200 drop-shadow-md"; }
+    }
+
+    let chargePercent = Math.min(100, (holdFrames / MAX_HOLD_FRAMES) * 100);
+    if (chargeFill) {
+        chargeFill.style.width = `${chargePercent}%`;
+        chargeFill.style.backgroundColor = chargePercent > 80 ? '#52d94a' : '#fbd000';
+    }
+
+    if (holdFrames >= MAX_HOLD_FRAMES) {
+        triggerJump();
+        holdFrames = 0;
+    }
+}
+
+function triggerJump() {
+    if (player.isJumping) return;
+    let elevator = platforms[0];
+    let target = platforms[1];
+    
+    player.isJumping = true;
+    player.jumpT = 0;
+    player.startX = elevator.x + elevator.w/2;
+    player.startY = elevator.y; 
+    player.targetX = target.x + target.w/2;
+    player.targetY = target.y; 
+}
+
+function updatePhysics() {
+    let elevator = platforms[0];
+    if (!player.isJumping && !cameraOffsetX) {
+        elevator.y += (elevator.currentElevatorY - elevator.y) * 0.2;
+        player.y = elevator.y; 
+    }
+
+    let targetBgOffsetY = (ch * 0.5 - platforms[1].y) * 0.2;
+    bgOffsetY += (targetBgOffsetY - bgOffsetY) * 0.05;
+
+    clouds.forEach(c => {
+        c.x -= c.speed;
+        if (c.x < -100) { c.x = cw + 100; c.y = Math.random() * ch * 0.5; }
+    });
+
+    if (player.isJumping) {
+        player.jumpT += 0.04; 
+        if (player.jumpT >= 1) {
+            player.jumpT = 1;
+            player.x = player.targetX;
+            player.y = player.targetY;
+            
+            currentProgress++;
+            if (uiProgress) uiProgress.innerText = `${currentProgress}/15`;
+            player.isJumping = false;
+            
+            if (currentProgress >= TOTAL_TARGETS) {
+                winLevel();
+            } else {
+                cameraOffsetX = platforms[1].x - platforms[0].x; 
+            }
+        } else {
+            player.x = player.startX + (player.targetX - player.startX) * player.jumpT;
+            let jumpArc = 45; 
+            player.y = player.startY + (player.targetY - player.startY) * player.jumpT - Math.sin(player.jumpT * Math.PI) * jumpArc;
+        }
+    } else if (cameraOffsetX > 0) {
+        let speed = cameraOffsetX * 0.12;
+        if (speed < 0.5) speed = cameraOffsetX;
+        
+        platforms.forEach(p => p.x -= speed);
+        player.x -= speed;
+        cameraOffsetX -= speed;
+        
+        if (cameraOffsetX <= 0) {
+            cameraOffsetX = 0;
+            platforms.shift(); 
+            platforms[0].isTarget = false;
+            platforms[0].currentElevatorY = platforms[0].y; 
+            
+            if(platforms.length > 1) platforms[1].isTarget = true; 
+            
+            let lastP = platforms[platforms.length - 1];
+            let nextX = lastP.x + 160 + Math.random()*30;
+            let next = getNextNoteLogic(lastP.poolIdx);
+            platforms.push({ x: nextX, y: getPlatformY(next.midi), w: PLATFORM_WIDTH, isTarget: false, midi: next.midi, poolIdx: next.poolIdx });
+            
+            updateTargetNoteUI();
+        }
+    }
+}
+
+function winLevel() {
+    isFinished = true;
+    isPlaying = false;
+    playerFinalTimeMs = Date.now() - startTime;
+    if (uiFinalTime) uiFinalTime.innerText = formatTime(playerFinalTimeMs);
+    if (victoryScreen) victoryScreen.classList.remove('hidden');
+    cancelAnimationFrame(animationId);
+    
+    renderLeaderboard();
+}
+
+function draw() {
+    if (!ctx) return;
+    
+    // Mario Sky Blue
+    ctx.fillStyle = '#5c94fc';
+    ctx.fillRect(0, 0, cw, ch);
+    
+    // Parallax Clouds
+    ctx.save();
+    ctx.translate(0, bgOffsetY * 0.3);
+    clouds.forEach(c => {
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
+        ctx.beginPath();
+        ctx.arc(c.x, c.y, 25 * c.s, 0, Math.PI*2);
+        ctx.arc(c.x - 20 * c.s, c.y + 10 * c.s, 20 * c.s, 0, Math.PI*2);
+        ctx.arc(c.x + 20 * c.s, c.y + 10 * c.s, 20 * c.s, 0, Math.PI*2);
+        ctx.fill();
+    });
+    ctx.restore();
+
+    // Alignment Line
+    if(platforms.length > 1) {
+        ctx.beginPath();
+        ctx.moveTo(platforms[0].x + platforms[0].w/2, platforms[0].y);
+        ctx.lineTo(platforms[1].x + platforms[1].w/2, platforms[1].y);
+        let isAligned = Math.abs(platforms[0].y - platforms[1].y) < 10;
+        ctx.strokeStyle = isAligned ? '#52d94a' : 'rgba(255, 255, 255, 0.4)';
+        ctx.lineWidth = isAligned ? 5 : 2;
+        if (!isAligned) ctx.setLineDash([8, 8]);
+        ctx.stroke();
+        ctx.setLineDash([]); 
+    }
+
+    // Platforms (Mario Brick Style Blocks)
+    platforms.forEach((p, index) => {
+        let isElevator = (index === 0);
+        let isTarget = p.isTarget;
+        
+        // 經典瑪利歐配色：升降梯(金黃)、目標(亮綠)、一般平台(紅棕)
+        let topColor = isElevator ? '#fbd000' : (isTarget ? '#52d94a' : '#cc4c11');
+        let bottomColor = isElevator ? '#e52521' : (isTarget ? '#166534' : '#8b3208');
+        
+        // --- 畫底座 (Pillar) ---
+        ctx.fillStyle = bottomColor;
+        ctx.fillRect(p.x, p.y + PLATFORM_HEIGHT, p.w, ch - p.y);
+        
+        // 底座交錯磚塊紋理
+        ctx.beginPath();
+        let bH = 20; // 磚塊高度
+        let bW = 40; // 磚塊寬度
+        for (let by = p.y + PLATFORM_HEIGHT; by < ch; by += bH) {
+            ctx.moveTo(p.x, by);
+            ctx.lineTo(p.x + p.w, by);
+            let rowIdx = Math.floor((by - (p.y + PLATFORM_HEIGHT)) / bH);
+            let offset = (rowIdx % 2 === 0) ? bW / 2 : 0;
+            for (let bx = offset; bx < p.w; bx += bW) {
+                if (bx > 0 && bx < p.w) {
+                    ctx.moveTo(p.x + bx, by);
+                    ctx.lineTo(p.x + bx, by + bH);
+                }
+            }
+        }
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.4)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // --- 畫頂部平台 (Top Block) ---
+        ctx.fillStyle = topColor;
+        ctx.fillRect(p.x, p.y, p.w, PLATFORM_HEIGHT);
+        
+        // 頂部磚塊紋理
+        ctx.beginPath();
+        ctx.moveTo(p.x, p.y + PLATFORM_HEIGHT / 2);
+        ctx.lineTo(p.x + p.w, p.y + PLATFORM_HEIGHT / 2);
+        ctx.moveTo(p.x + p.w / 2, p.y);
+        ctx.lineTo(p.x + p.w / 2, p.y + PLATFORM_HEIGHT / 2);
+        ctx.moveTo(p.x + p.w / 4, p.y + PLATFORM_HEIGHT / 2);
+        ctx.lineTo(p.x + p.w / 4, p.y + PLATFORM_HEIGHT);
+        ctx.moveTo(p.x + p.w * 0.75, p.y + PLATFORM_HEIGHT / 2);
+        ctx.lineTo(p.x + p.w * 0.75, p.y + PLATFORM_HEIGHT);
+        ctx.strokeStyle = 'rgba(0, 0, 0, 0.5)';
+        ctx.lineWidth = 2;
+        ctx.stroke();
+
+        // 3D 邊緣高光與陰影 (增強復古立體感)
+        ctx.fillStyle = 'rgba(255, 255, 255, 0.5)';
+        ctx.fillRect(p.x, p.y, p.w, 3); // 上高光
+        ctx.fillRect(p.x, p.y, 3, PLATFORM_HEIGHT); // 左高光
+        ctx.fillStyle = 'rgba(0, 0, 0, 0.3)';
+        ctx.fillRect(p.x, p.y + PLATFORM_HEIGHT - 3, p.w, 3); // 下陰影
+        ctx.fillRect(p.x + p.w - 3, p.y, 3, PLATFORM_HEIGHT); // 右陰影
+
+        // 黑色粗外框
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 3;
+        ctx.strokeRect(p.x, p.y, p.w, ch - p.y);
+        ctx.strokeRect(p.x, p.y, p.w, PLATFORM_HEIGHT);
+        
+        // Note Name explicitly drawn on platform
+        ctx.fillStyle = '#ffffff';
+        ctx.strokeStyle = '#000000';
+        ctx.lineWidth = 4;
+        ctx.font = 'bold 16px "Fredoka One", cursive';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        let noteStr = getNoteName(p.midi);
+        ctx.strokeText(noteStr, p.x + p.w / 2, p.y + PLATFORM_HEIGHT / 2);
+        ctx.fillText(noteStr, p.x + p.w / 2, p.y + PLATFORM_HEIGHT / 2);
+    });
+    
+    // Draw Dinosaur
+    ctx.font = `${player.size}px Arial`;
+    ctx.textAlign = 'center';
+    ctx.textBaseline = 'bottom';
+    
+    ctx.save();
+    ctx.translate(player.x, player.y);
+    ctx.scale(-1, 1); 
+    if(player.isJumping) ctx.rotate(-0.15); 
+    ctx.fillText('🦖', 0, 8);
+    ctx.restore();
+}
+</script>
+</body>
+</html>
