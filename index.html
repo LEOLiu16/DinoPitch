@@ -19,7 +19,6 @@
         /* Game UI Top - Auto sizing */
         #game-ui { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: env(safe-area-inset-top, 10px) 0 15px 0; background: linear-gradient(to bottom, #1e3a8a, #2b6cb0); color: white; z-index: 10; border-bottom: 4px solid #1e40af; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); }
         
-        /* Timer, Progress, and Back Button UI */
         .status-header { display: flex; justify-content: space-between; align-items: center; width: 95%; max-width: 450px; margin-bottom: 8px; }
         .timer-text { font-size: 1.1rem; font-weight: bold; color: #fbd000; font-family: 'Courier New', Courier, monospace; text-shadow: 1px 1px 2px black;}
         .progress-text { font-size: 1.1rem; font-weight: bold; color: #52d94a; font-family: 'Courier New', Courier, monospace; text-shadow: 1px 1px 2px black;}
@@ -90,7 +89,7 @@
                 <div class="flex-1">
                     <label class="block text-yellow-300 text-xs mb-1 font-bold">難度等級 (Tolerance)</label>
                     <select id="difficulty" class="w-full p-2 text-sm bg-gray-700 text-white rounded outline-none border border-gray-600 focus:border-green-400 font-bold">
-                        <option value="50">1. 我是素人</option>
+                        <option value="50">1. 素人歌手</option>
                         <option value="40">2. KTV之王</option>
                         <option value="30" selected>3. 街頭藝人 </option>
                         <option value="20">4. 錄音室等級</option>
@@ -102,9 +101,9 @@
             <div>
                 <label class="block text-green-300 text-xs mb-1 font-bold">關卡選擇 (Level)</label>
                 <select id="play-mode" class="w-full p-2 text-sm bg-gray-700 text-white rounded outline-none border border-gray-600 focus:border-green-400 font-bold">
-                    <option value="1" selected>Level 1: 上行下行 (依序)</option>
-                    <option value="2">Level 2: 峰迴路轉 (相鄰跳轉)</option>
-                    <option value="3">Level 3: 瘋狂跳躍 (隨機)</option>
+                    <option value="1" selected>Level 1: 上行下行 </option>
+                    <option value="2">Level 2: 峰迴路轉 </option>
+                    <option value="3">Level 3: 瘋狂跳躍 </option>
                 </select>
             </div>
             
@@ -128,7 +127,7 @@
                 🏆 排行榜
             </button>
         </div>
-        <p class="text-[12px] text-gray-400 mt-4 tracking-widest font-mono font-bold" id="mic-status-msg">Design by 劉文傑</p>
+        <p class="text-[12px] text-gray-400 mt-4 tracking-widest font-mono font-bold" id="mic-status-msg">v1.0732   Design by 劉文傑</p>
     </div>
 
     <!-- 獨立排行榜畫面 -->
@@ -137,16 +136,16 @@
         
         <div class="w-full max-w-sm flex space-x-2 mb-4">
             <select id="standalone-level" class="flex-1 p-2 bg-gray-700 text-white rounded text-sm font-bold outline-none border border-gray-600 focus:border-green-400">
-                <option value="1">Level 1: 上下行</option>
+                <option value="1">Level 1: 上行下行</option>
                 <option value="2">Level 2: 峰迴路轉</option>
                 <option value="3">Level 3: 瘋狂跳躍</option>
             </select>
             <select id="standalone-diff" class="flex-1 p-2 bg-gray-700 text-white rounded text-sm font-bold outline-none border border-gray-600 focus:border-green-400">
-                <option value="50">1. 素人</option>
-                <option value="40">2. KTV</option>
+                <option value="50">1. 素人歌手</option>
+                <option value="40">2. KTV之王</option>
                 <option value="30" selected>3. 街頭藝人</option>
-                <option value="20">4. 錄音室</option>
-                <option value="10">5. 專業</option>
+                <option value="20">4. 錄音室等級</option>
+                <option value="10">5. 專業歌手</option>
             </select>
         </div>
         
@@ -264,7 +263,7 @@ const firebaseConfig = {
 };
 
 import { initializeApp } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js";
-import { getFirestore, collection, addDoc, query, where, orderBy, limit, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
+import { getFirestore, collection, addDoc, query, where, getDocs } from "https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js";
 
 let db = null;
 let useCloud = false;
@@ -310,22 +309,24 @@ async function syncOfflineRecords() {
     }
 }
 
-// 讀取排行榜資料
+// 讀取排行榜資料 (繞過複合索引的前端排序法)
 async function fetchLeaderboard(currLevel, currDifficulty) {
     if (useCloud && db) {
         try {
+            // 💡 移除 orderBy 和 limit，避開 Firebase 的複合索引限制
             const q = query(collection(db, "scores"),
                 where("level", "==", currLevel),
-                where("difficulty", "==", currDifficulty),
-                orderBy("time", "asc"),
-                limit(10)
+                where("difficulty", "==", currDifficulty)
             );
             const querySnapshot = await getDocs(q);
             let records = [];
             querySnapshot.forEach((doc) => records.push(doc.data()));
             
-            if (records.length > 0) return records;
-            // 若雲端沒資料，嘗試抓本機的當備用顯示
+            if (records.length > 0) {
+                // 💡 改由前端 JavaScript 進行時間從小到大排序，並只取前 10 名
+                records.sort((a, b) => a.time - b.time);
+                return records.slice(0, 10);
+            }
         } catch (e) {
             console.warn("讀取雲端排行失敗，切換本機模式:", e);
         }
@@ -467,6 +468,17 @@ let cameraOffsetX = 0;
 const PLATFORM_WIDTH = 80; 
 const PLATFORM_HEIGHT = 24; 
 
+// 解決 Chrome/Windows 翻轉 Emoji 會變半透明的 Bug (預先渲染實體圖片在獨立畫布)
+const dinoCanvas = document.createElement('canvas');
+dinoCanvas.width = 120;
+dinoCanvas.height = 120;
+const dctx = dinoCanvas.getContext('2d');
+dctx.font = '56px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", Arial';
+dctx.textAlign = 'center';
+dctx.textBaseline = 'bottom';
+// 將暴龍畫在虛擬畫布上，確保他是 100% 不透明的圖層
+dctx.fillText('🦖', 60, 100);
+
 let playMode = '1';
 let scaleDir = 1;
 
@@ -588,9 +600,21 @@ window.addEventListener('DOMContentLoaded', async () => {
 window.addEventListener('resize', resize);
 function resize() {
     if (!canvas) return;
-    canvas.width = canvas.clientWidth;
-    canvas.height = canvas.clientHeight;
-    cw = canvas.width; ch = canvas.height;
+    // 取得裝置的像素密度 (解決手機/高畫質螢幕模糊的問題)
+    let dpr = window.devicePixelRatio || 1;
+    
+    // 將畫布實際像素放大
+    canvas.width = canvas.clientWidth * dpr;
+    canvas.height = canvas.clientHeight * dpr;
+    
+    // 讓遊戲邏輯保持原本的 CSS 尺寸
+    cw = canvas.clientWidth; 
+    ch = canvas.clientHeight;
+    
+    // 縮放畫布內容，讓畫面變得無比清晰銳利
+    if(ctx) {
+        ctx.setTransform(dpr, 0, 0, dpr, 0, 0);
+    }
 }
 
 function autoCorrelate(buf, sampleRate) {
@@ -1003,12 +1027,15 @@ function draw() {
         ctx.strokeStyle = '#000000'; ctx.lineWidth = 3; ctx.strokeRect(p.x, p.y, p.w, ch - p.y); ctx.strokeRect(p.x, p.y, p.w, PLATFORM_HEIGHT);
     });
     
-    // Draw Player
-    ctx.font = `${player.size}px Arial`; ctx.textAlign = 'center'; ctx.textBaseline = 'bottom';
+    // Draw Player (使用剛剛預先渲染好的不透明暴龍圖片，取代原本會破圖的文字)
     ctx.save();
-    ctx.translate(player.x, player.y); ctx.scale(-1, 1); 
+    ctx.translate(player.x, player.y);
+    ctx.scale(-1, 1); 
     if(player.isJumping) ctx.rotate(-0.15); 
-    ctx.fillText('🦖', 0, 8);
+    
+    // 繪製我們事先在虛擬畫布上畫好的 100% 實體恐龍！
+    ctx.drawImage(dinoCanvas, -60, -92);
+    
     ctx.restore();
 }
 </script>
