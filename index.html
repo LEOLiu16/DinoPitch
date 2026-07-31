@@ -165,7 +165,7 @@
                 </table>
             </div>
         </div>
-        <button id="standalone-lb-back-btn" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-3 px-10 rounded-full shadow-[0_4px_0_#374151] active:translate-y-1 active:shadow-none border-2 border-gray-800 text-lg">返回設定</button>
+        <button id="standalone-lb-back-btn" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-3 px-10 rounded-full shadow-[0_4px_0_#374151] active:translate-y-1 active:shadow-none border-2 border-gray-800 text-lg">返回首頁</button>
     </div>
 
     <!-- 勝利通關與排行榜畫面 -->
@@ -202,9 +202,9 @@
 
         <div class="flex space-x-4">
             <button id="restart-btn" class="bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-6 rounded-full shadow-[0_4px_0_#166534] active:translate-y-1 active:shadow-none border-2 border-green-800">再挑戰</button>
-            <button id="settings-btn" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-3 px-6 rounded-full shadow-[0_4px_0_#374151] active:translate-y-1 active:shadow-none border-2 border-gray-800">回設定</button>
+            <button id="settings-btn" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-3 px-6 rounded-full shadow-[0_4px_0_#374151] active:translate-y-1 active:shadow-none border-2 border-gray-800">回首頁</button>
         </div>
-        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">Designer 劉文傑</p>
+        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">Design by 劉文傑</p>
     </div>
 
     <!-- 自訂提示視窗 (防洗數據用) -->
@@ -994,8 +994,11 @@ function draw() {
             }
             ctx.fillStyle = '#ffffff'; ctx.strokeStyle = '#000000'; ctx.lineWidth = 4;
             ctx.font = 'bold 16px "Fredoka One", cursive'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
-            ctx.strokeText("終點", p.x + p.w / 2, p.y + PLATFORM_HEIGHT / 2);
-            ctx.fillText("終點", p.x + p.w / 2, p.y + PLATFORM_HEIGHT / 2);
+            
+            // 替換為實際音名，取代原本的「終點」文字
+            let noteStr = getNoteName(p.midi);
+            ctx.strokeText(noteStr, p.x + p.w / 2, p.y + PLATFORM_HEIGHT / 2);
+            ctx.fillText(noteStr, p.x + p.w / 2, p.y + PLATFORM_HEIGHT / 2);
         } else {
             // Standard Platform Top
             ctx.fillStyle = topColor; ctx.fillRect(p.x, p.y, p.w, PLATFORM_HEIGHT);
