@@ -12,7 +12,7 @@
         
         #game-container { display: flex; flex-direction: column; height: 100dvh; width: 100vw; position: relative; }
         
-        .overlay-screen { position: absolute; top: 0; left: 0; width: 100%; height: 100dvh; background: rgba(15, 23, 42, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; color: white; padding: 20px; overflow-y: auto;}
+        .overlay-screen { position: absolute; inset: 0; background: rgba(15, 23, 42, 0.95); display: flex; flex-direction: column; align-items: center; justify-content: center; z-index: 50; color: white; padding: 20px; overflow-y: auto;}
         .hidden { display: none !important; }
         
         #game-ui { flex: none; display: flex; flex-direction: column; align-items: center; justify-content: center; padding: env(safe-area-inset-top, 10px) 0 15px 0; background: linear-gradient(to bottom, #1e3a8a, #2b6cb0); color: white; z-index: 10; border-bottom: 4px solid #1e40af; box-shadow: 0 4px 6px -1px rgba(0,0,0,0.5); }
@@ -95,10 +95,10 @@
             <div>
                 <label class="block text-green-300 text-xs mb-1 font-bold">關卡選擇 (Level)</label>
                 <select id="play-mode" class="w-full p-2 text-sm bg-gray-700 text-white rounded outline-none border border-gray-600 focus:border-green-400 font-bold">
-                    <option value="1" selected>Level 1: 上行下行</option>
+                    <option value="1">Level 1: 上行下行</option>
                     <option value="2">Level 2: 峰迴路轉</option>
                     <option value="3">Level 3: 瘋狂跳躍</option>
-                    <option value="4">Level 4: 轉音高手</option>
+                    <option value="4" selected>Level 4: 轉音高手</option>
                 </select>
             </div>
             
@@ -114,7 +114,6 @@
                 </select>
             </div>
             
-            <!-- 轉音限時設定 (Level 4 專屬) -->
             <div id="timeout-setting-container" class="hidden">
                 <label class="block text-purple-300 text-xs mb-1 font-bold">⏱️ 轉音限時 (高難度專屬)</label>
                 <select id="level4-timeout-val" class="w-full p-2 text-sm bg-gray-700 text-white rounded outline-none border border-gray-600 focus:border-green-400 font-bold">
@@ -135,9 +134,8 @@
             </button>
         </div>
         
-        <!-- 動態麥克風訊息與固定版權資訊 -->
         <p class="text-[12px] text-yellow-400 mt-4 tracking-widest font-mono font-bold" id="mic-status-msg"></p>
-        <p class="text-[12px] text-gray-400 mt-2 tracking-widest font-mono font-bold">v1.15 Design by 劉文傑</p>
+        <p class="text-[12px] text-gray-400 mt-2 tracking-widest font-mono font-bold">v1.16 Design by 劉文傑</p>
     </div>
 
     <div id="standalone-lb-screen" class="overlay-screen hidden z-[60]">
@@ -148,7 +146,7 @@
                 <option value="1">Level 1: 上行下行</option>
                 <option value="2">Level 2: 峰迴路轉</option>
                 <option value="3">Level 3: 瘋狂跳躍</option>
-                <option value="4">Level 4: 轉音高手</option>
+                <option value="4" selected>Level 4: 轉音高手</option>
             </select>
             <select id="standalone-diff" class="flex-1 p-2 bg-gray-700 text-white rounded text-sm font-bold outline-none border border-gray-600 focus:border-green-400">
                 <option value="50">1. 素人歌手</option>
@@ -185,7 +183,7 @@
             </div>
         </div>
         <button id="standalone-lb-back-btn" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-3 px-10 rounded-full shadow-[0_4px_0_#374151] active:translate-y-1 active:shadow-none border-2 border-gray-800 text-lg">返回首頁</button>
-        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">v1.15 Design by 劉文傑</p>
+        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">v1.16 Design by 劉文傑</p>
     </div>
 
     <div id="victory-screen" class="overlay-screen hidden z-[55]">
@@ -220,7 +218,7 @@
             <button id="restart-btn" class="bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-6 rounded-full shadow-[0_4px_0_#166534] active:translate-y-1 active:shadow-none border-2 border-green-800">再挑戰</button>
             <button id="settings-btn" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-3 px-6 rounded-full shadow-[0_4px_0_#374151] active:translate-y-1 active:shadow-none border-2 border-gray-800">回首頁</button>
         </div>
-        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">v1.15 Design by 劉文傑</p>
+        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">v1.16 Design by 劉文傑</p>
     </div>
 
     <!-- 自訂提示框 -->
@@ -243,11 +241,10 @@
         
         <div class="text-center relative mt-1 w-full flex flex-col items-center">
             <div class="flex items-center justify-center space-x-4 w-full">
-                <!-- 這裡的寬度解除鎖定，讓 Level 4 可以顯示長文字 -->
                 <h2 id="target-note-display" class="text-4xl text-white drop-shadow-[0_2px_2px_rgba(0,0,0,0.8)] title-font w-20 text-center transition-all">C4</h2>
-                <button id="hint-btn" class="bg-yellow-400 hover:bg-yellow-300 text-xl p-2 rounded-full shadow-[0_4px_0_#b45309] border-2 border-yellow-700 active:translate-y-1 active:shadow-none transition-all" title="長按/點擊重聽">🔊</button>
+                <button id="hint-btn" class="bg-yellow-400 hover:bg-yellow-300 text-xl p-2 rounded-full shadow-[0_4px_0_#b45309] border-2 border-yellow-700 active:translate-y-1 active:shadow-none transition-all" title="點擊重聽">🔊</button>
             </div>
-            <p class="text-[10px] text-gray-300 mt-1 absolute -bottom-4 left-0 w-full text-center font-bold">按🔊重聽 / 對音準</p>
+            <p class="text-[10px] text-gray-300 mt-1 absolute -bottom-4 left-0 w-full text-center font-bold">點🔊重聽 / 抓音準</p>
         </div>
 
         <div class="tuner-container mt-5">
@@ -456,6 +453,7 @@ function getFrequencyFromMidi(midi) { return 440 * Math.pow(2, (midi - 69) / 12)
 function getMidiFromFrequency(freq) { return Math.round(12 * (Math.log2(freq / 440)) + 69); }
 
 let audioCtx, analyser, microphone;
+let masterGain, compressor; // 戶外大聲公設定
 let isPlaying = false, isFinished = false;
 let animationId;
 let gamePool = [];
@@ -470,6 +468,9 @@ let startTime = 0;
 let targetMidi = 60, targetFreq = 261.63;
 let holdFrames = 0;
 let centsTolerance = 30;
+// 動態過關時間縮短 (FPS 計算)
+let REQUIRED_FRAMES_NORMAL = 21; // 0.35s
+let REQUIRED_FRAMES_L4 = 9;      // 0.15s
 
 // Level 4 Special Variables
 let playMode = '1';
@@ -497,6 +498,7 @@ let player = { x: 0, y: 0, size: 56, isJumping: false, jumpT: 0, startX: 0, star
 let platforms = [], cameraOffsetX = 0;
 const PLATFORM_WIDTH = 80, PLATFORM_HEIGHT = 24; 
 
+// 預先渲染實體暴龍，避免 Chromium Bug
 const dinoCanvas = document.createElement('canvas');
 dinoCanvas.width = 120; dinoCanvas.height = 120;
 const dctx = dinoCanvas.getContext('2d');
@@ -595,9 +597,10 @@ window.addEventListener('DOMContentLoaded', async () => {
         else playTargetTone(); 
     }, { passive: false });
     
-    hintBtn.addEventListener('mouseleave', stopTargetTone);
-    window.addEventListener('mouseup', stopTargetTone);
-    window.addEventListener('touchend', stopTargetTone);
+    // 只在非 Level4 中，放開按鈕即停止
+    hintBtn.addEventListener('mouseleave', () => { if(playMode !== '4') stopTargetTone(); });
+    window.addEventListener('mouseup', () => { if(playMode !== '4') stopTargetTone(); });
+    window.addEventListener('touchend', () => { if(playMode !== '4') stopTargetTone(); });
 
     document.getElementById('submit-score-btn').addEventListener('click', async () => {
         if (scoreSubmitted) return;
@@ -650,13 +653,26 @@ function resize() {
 function generateLevel4Sequence(rootIdx, total, gapMax) {
     let seq = [];
     let curr = rootIdx;
-    for(let i=0; i<total; i++) {
+    for(let i = 0; i < total; i++) {
         let gap = Math.floor(Math.random() * gapMax) + 1; 
         let dir = Math.random() < 0.5 ? 1 : -1;
-        curr += dir * gap;
-        if(curr < 0) curr = Math.abs(curr);
-        if(curr >= gamePool.length) curr = gamePool.length - 1 - (curr - (gamePool.length - 1));
-        curr = Math.max(0, Math.min(gamePool.length - 1, curr));
+        let next = curr + (dir * gap);
+        
+        // Bounce
+        if(next < 0) next = Math.abs(next);
+        else if (next >= gamePool.length) {
+            next = gamePool.length - 1 - (next - (gamePool.length - 1));
+        }
+        
+        // 防撞設定：絕對不能跟前一個音一樣
+        if(next === curr) {
+            if(curr === 0) next = 1;
+            else if(curr === gamePool.length - 1) next = curr - 1;
+            else next = curr + (Math.random() > 0.5 ? 1 : -1);
+        }
+        
+        next = Math.max(0, Math.min(gamePool.length - 1, next));
+        curr = next;
         seq.push(curr);
     }
     return seq;
@@ -670,6 +686,7 @@ function clearLevel4Audio() {
     isTimerActive = false;
 }
 
+// 戶外大聲公：疊加方波並套用 Compressor 讓聲音激增不失真
 function createPianoNote(freq, startTime, duration) {
     if (!audioCtx) return [];
     let o1 = audioCtx.createOscillator();
@@ -677,16 +694,24 @@ function createPianoNote(freq, startTime, duration) {
     let g = audioCtx.createGain();
     
     o1.type = 'triangle';
-    o2.type = 'sine';
+    o2.type = 'square'; // 加入方波製造穿透力
     o1.frequency.value = freq;
-    o2.frequency.value = freq;
+    o2.frequency.value = freq * 2; // 泛音
     
-    o1.connect(g); o2.connect(g);
-    g.connect(audioCtx.destination);
+    o1.connect(g);
+    
+    // 獨立控制方波音量避免太刺耳
+    let o2Gain = audioCtx.createGain();
+    o2Gain.gain.value = 0.15;
+    o2.connect(o2Gain);
+    o2Gain.connect(g);
+    
+    // 連結到戶外專用的 Master Gain
+    g.connect(masterGain);
     
     g.gain.setValueAtTime(0, startTime);
-    g.gain.linearRampToValueAtTime(0.7, startTime + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.01, startTime + duration);
+    g.gain.linearRampToValueAtTime(1.0, startTime + 0.02); // 全力輸出，交給 Compressor 壓制
+    g.gain.exponentialRampToValueAtTime(0.001, startTime + duration);
     
     o1.start(startTime); o2.start(startTime);
     o1.stop(startTime + duration); o2.stop(startTime + duration);
@@ -702,9 +727,9 @@ function playSuccessChime() {
         let g = audioCtx.createGain();
         o.type = 'sine';
         o.frequency.value = f;
-        o.connect(g); g.connect(audioCtx.destination);
+        o.connect(g); g.connect(masterGain);
         g.gain.setValueAtTime(0, t + i*0.08);
-        g.gain.linearRampToValueAtTime(0.4, t + i*0.08 + 0.01);
+        g.gain.linearRampToValueAtTime(0.6, t + i*0.08 + 0.01);
         g.gain.exponentialRampToValueAtTime(0.01, t + i*0.08 + 0.5);
         o.start(t + i*0.08);
         o.stop(t + i*0.08 + 0.5);
@@ -718,7 +743,7 @@ function playGroupSequence(delaySeconds = 1.5) {
     clearLevel4Audio();
     level4SequencePlaying = true;
     
-    statusText.innerText = "🎵 聆聽提示音... (整段重聽會重新開始)";
+    statusText.innerText = "🎵 聆聽提示音... (點喇叭整段重置)";
     statusText.className = "text-xs mt-1 h-3 font-bold text-blue-300 drop-shadow-md";
     hintBtn.classList.add('bg-blue-600', 'border-blue-400');
     
@@ -762,20 +787,7 @@ function playTargetTone() {
     
     let freq = isPlaying ? targetFreq : getFrequencyFromMidi((parseInt(document.getElementById('octave').value) + 1) * 12 + parseInt(document.getElementById('root-note').value));
     
-    let o1 = audioCtx.createOscillator();
-    let o2 = audioCtx.createOscillator();
-    let g = audioCtx.createGain();
-    o1.type = 'triangle'; o2.type = 'sine';
-    o1.frequency.value = freq; o2.frequency.value = freq;
-    o1.connect(g); o2.connect(g); g.connect(audioCtx.destination);
-    
-    let t = audioCtx.currentTime;
-    g.gain.setValueAtTime(0, t);
-    g.gain.linearRampToValueAtTime(0.7, t + 0.02);
-    g.gain.exponentialRampToValueAtTime(0.1, t + 1.0); 
-    
-    o1.start(t); o2.start(t);
-    targetToneNodes = [o1, o2, g];
+    targetToneNodes = createPianoNote(freq, audioCtx.currentTime, 1.0);
     
     if (isPlaying && hintBtn) hintBtn.classList.add('bg-yellow-200', 'border-yellow-400');
 }
@@ -823,15 +835,31 @@ async function startAudioAndGame() {
     try {
         if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) throw new Error("環境不支援");
         if(!microphone) {
-            if(!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+            if(!audioCtx) {
+                audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+                analyser = audioCtx.createAnalyser(); analyser.fftSize = 4096; 
+                
+                // 戶外大聲公模式 Compressor 設定
+                compressor = audioCtx.createDynamicsCompressor();
+                compressor.threshold.value = -12;
+                compressor.knee.value = 30;
+                compressor.ratio.value = 12;
+                compressor.attack.value = 0.003;
+                compressor.release.value = 0.25;
+                
+                masterGain = audioCtx.createGain();
+                masterGain.gain.value = 4.0; // 將整體音量放大 4 倍
+                
+                masterGain.connect(compressor);
+                compressor.connect(audioCtx.destination);
+            }
             let stream = await navigator.mediaDevices.getUserMedia({ audio: true });
-            analyser = audioCtx.createAnalyser(); analyser.fftSize = 4096; 
             microphone = audioCtx.createMediaStreamSource(stream); microphone.connect(analyser);
         }
         if (audioCtx.state === 'suspended') await audioCtx.resume();
         initGame();
         btn.disabled = false; btn.innerText = "開始遊戲";
-        micStatusMsg.innerText = ""; // Clear text upon success
+        micStatusMsg.innerText = ""; 
     } catch (err) {
         micStatusMsg.innerHTML = "🎤 麥克風存取失敗！請確認網址為 https://"; 
         micStatusMsg.classList.remove('text-yellow-400'); micStatusMsg.classList.add('text-red-400');
@@ -875,11 +903,21 @@ function getNextNoteLogic(lastIdx) {
     } else if (playMode === '2') {
         let dir = Math.random() < 0.5 ? 1 : -1;
         nextIdx = lastIdx + dir;
-        if (nextIdx >= gamePool.length) nextIdx = lastIdx - 1;
-        if (nextIdx < 0) nextIdx = lastIdx + 1;
     } else {
         do { nextIdx = Math.floor(Math.random() * gamePool.length); } while (nextIdx === lastIdx && gamePool.length > 1);
     }
+    
+    // Bounds Check & Bounce
+    if (nextIdx < 0) nextIdx = Math.abs(nextIdx);
+    if (nextIdx >= gamePool.length) nextIdx = gamePool.length - 1 - (nextIdx - (gamePool.length - 1));
+    
+    // 一般模式下的防撞 (跟上一個音一樣時強迫跳躍)
+    if (nextIdx === lastIdx && gamePool.length > 1) {
+        if (lastIdx === 0) nextIdx = 1;
+        else if (lastIdx === gamePool.length - 1) nextIdx = lastIdx - 1;
+        else nextIdx = lastIdx + (Math.random() > 0.5 ? 1 : -1);
+    }
+    
     nextIdx = Math.max(0, Math.min(gamePool.length - 1, nextIdx));
     return { midi: gamePool[nextIdx], poolIdx: nextIdx };
 }
@@ -1021,7 +1059,8 @@ function updateAudio() {
     let targetPlatformIdx = playMode === '4' ? 1 + level4GroupIndex : 1;
     let target = platforms[targetPlatformIdx];
     
-    let requiredHold = playMode === '4' ? 9 : 25;
+    // FPS 精準判定 (原 0.35s = 21frames, 0.15s = 9frames)
+    let requiredHold = playMode === '4' ? REQUIRED_FRAMES_L4 : REQUIRED_FRAMES_NORMAL;
     let activeTolerance = playMode === '4' ? centsTolerance + 20 : centsTolerance;
     
     if (pitch !== -1) {
@@ -1254,6 +1293,7 @@ function draw() {
         ctx.strokeStyle = '#000000'; ctx.lineWidth = 3; ctx.strokeRect(p.x, p.y, p.w, ch - p.y); ctx.strokeRect(p.x, p.y, p.w, PLATFORM_HEIGHT);
     });
     
+    // 利用預先渲染在實體 Canvas 的恐龍避免 Chromium BUG
     ctx.save(); ctx.translate(player.x, player.y); ctx.scale(-1, 1); 
     if(player.isJumping) ctx.rotate(-0.15); 
     ctx.drawImage(dinoCanvas, -60, -92); ctx.restore();
