@@ -1021,7 +1021,7 @@ function updateAudio() {
     let targetPlatformIdx = playMode === '4' ? 1 + level4GroupIndex : 1;
     let target = platforms[targetPlatformIdx];
     
-    let requiredHold = playMode === '4' ? 15 : 35;
+    let requiredHold = playMode === '4' ? 9 : 25;
     let activeTolerance = playMode === '4' ? centsTolerance + 20 : centsTolerance;
     
     if (pitch !== -1) {
