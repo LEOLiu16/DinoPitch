@@ -7,6 +7,7 @@
     <script src="https://cdn.tailwindcss.com"></script>
     <link href="https://fonts.googleapis.com/css2?family=Fredoka+One&family=Noto+Sans+TC:wght@400;700&display=swap" rel="stylesheet">
     <style>
+        *, *::before, *::after { box-sizing: border-box; }
         body, html { margin: 0; padding: 0; width: 100%; height: 100dvh; overflow: hidden; background-color: #1a202c; touch-action: none; font-family: 'Noto Sans TC', sans-serif; }
         h1, h2, h3, .title-font { font-family: 'Fredoka One', cursive; }
         
@@ -113,15 +114,15 @@
             </div>
         </div>
         
-        <div class="flex space-x-3 mt-6">
-            <button id="start-btn" class="bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-6 rounded-full text-lg shadow-[0_6px_0_#166534] transform transition active:translate-y-2 active:shadow-[0_0px_0_#166534] title-font border-2 border-green-800">
+        <div class="flex space-x-3 mt-6 w-full max-w-sm justify-center">
+            <button id="start-btn" class="flex-1 bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-2 rounded-full text-lg shadow-[0_6px_0_#166534] transform transition active:translate-y-2 active:shadow-[0_0px_0_#166534] title-font border-2 border-green-800">
                 開始遊戲
             </button>
-            <button id="standalone-lb-btn" class="bg-yellow-500 hover:bg-yellow-400 text-white font-bold py-3 px-4 rounded-full text-sm shadow-[0_6px_0_#b45309] transform transition active:translate-y-2 active:shadow-[0_0px_0_#b45309] title-font border-2 border-yellow-800 flex items-center justify-center">
+            <button id="standalone-lb-btn" class="flex-1 bg-yellow-500 hover:bg-yellow-400 text-white font-bold py-3 px-2 rounded-full text-sm shadow-[0_6px_0_#b45309] transform transition active:translate-y-2 active:shadow-[0_0px_0_#b45309] title-font border-2 border-yellow-800 flex items-center justify-center">
                 🏆 排行榜
             </button>
         </div>
-        <p class="text-[12px] text-gray-400 mt-4 tracking-widest font-mono font-bold" id="mic-status-msg">v1.12   Design by 劉文傑</p>
+        <p class="text-[12px] text-gray-400 mt-4 tracking-widest font-mono font-bold" id="mic-status-msg">v1.14   Design by 劉文傑</p>
     </div>
 
     <div id="standalone-lb-screen" class="overlay-screen hidden z-[60]">
@@ -177,9 +178,9 @@
         
         <div id="lb-form-container" class="hidden bg-gray-800 p-4 rounded-xl w-full max-w-sm mb-4 shadow-lg border-2 border-yellow-500 transition-all duration-300">
             <p class="text-yellow-300 font-bold mb-2 text-sm text-center">🏆 恭喜擠進該難度前 10 名！留個名吧</p>
-            <div class="flex space-x-2">
-                <input type="text" id="player-name" placeholder="輸入您的大名" class="flex-1 p-2 rounded text-black font-bold outline-none border-2 border-gray-400 focus:border-green-500" maxlength="10">
-                <button id="submit-score-btn" class="bg-green-500 hover:bg-green-400 px-4 py-2 rounded text-white font-bold shadow-[0_4px_0_#166534] active:translate-y-1 active:shadow-none transition-all">送出</button>
+            <div class="flex space-x-2 w-full items-center">
+                <input type="text" id="player-name" placeholder="輸入您的大名" class="flex-1 min-w-0 p-2 rounded text-black font-bold outline-none border-2 border-gray-400 focus:border-green-500" maxlength="10">
+                <button id="submit-score-btn" class="shrink-0 bg-green-500 hover:bg-green-400 px-4 py-2 rounded text-white font-bold shadow-[0_4px_0_#166534] active:translate-y-1 active:shadow-none transition-all">送出</button>
             </div>
         </div>
 
@@ -309,7 +310,6 @@ async function syncOfflineRecords() {
 async function fetchLeaderboard(currLevel, currDifficulty, currScale) {
     if (useCloud && db) {
         try {
-            // 前端排序避開複合索引
             const q = query(collection(db, "scores"),
                 where("level", "==", currLevel),
                 where("difficulty", "==", currDifficulty),
@@ -417,12 +417,13 @@ async function renderStandaloneLeaderboard() {
 }
 
 const NOTE_NAMES = ['C', 'C#', 'D', 'D#', 'E', 'F', 'F#', 'G', 'G#', 'A', 'A#', 'B'];
+// 💡 更新：所有音階最後加上 12 (代表完美八度)，讓每個題庫最高音都會剛好觸及下一個八度的根音
 const SCALE_INTERVALS = {
-    'major': [0, 2, 4, 5, 7, 9, 11],
-    'major-penta': [0, 2, 4, 7, 9],
-    'minor': [0, 2, 3, 5, 7, 8, 10],
-    'minor-penta': [0, 3, 5, 7, 10],
-    'blues': [0, 3, 5, 6, 7, 10]
+    'major': [0, 2, 4, 5, 7, 9, 11, 12],
+    'major-penta': [0, 2, 4, 7, 9, 12],
+    'minor': [0, 2, 3, 5, 7, 8, 10, 12],
+    'minor-penta': [0, 3, 5, 7, 10, 12],
+    'blues': [0, 3, 5, 6, 7, 10, 12]
 };
 
 function getNoteName(midiNumber) {
@@ -440,7 +441,7 @@ let animationId;
 let gamePool = [];
 let osc = null;
 let buffer = new Float32Array(4096); 
-let smoothedCentsOff = null; // 指數平滑，過濾人聲抖動
+let smoothedCentsOff = null; 
 
 let minMidi = 0, maxMidi = 100, pixelPerSemitone = 20; 
 const TOTAL_TARGETS = 15;
@@ -461,7 +462,6 @@ let player = { x: 0, y: 0, size: 56, isJumping: false, jumpT: 0, startX: 0, star
 let platforms = [], cameraOffsetX = 0;
 const PLATFORM_WIDTH = 80, PLATFORM_HEIGHT = 24; 
 
-// 預先渲染實體暴龍 (防瀏覽器 Bug)
 const dinoCanvas = document.createElement('canvas');
 dinoCanvas.width = 120; dinoCanvas.height = 120;
 const dctx = dinoCanvas.getContext('2d');
@@ -492,13 +492,12 @@ window.addEventListener('DOMContentLoaded', async () => {
     hintBtn = document.getElementById('hint-btn');
     micStatusMsg = document.getElementById('mic-status-msg');
 
-    // 智慧切換根音邏輯 (因應下拉選單修改)
     document.getElementById('scale-type').addEventListener('change', function() {
         const rootSelect = document.getElementById('root-note');
         if (this.value === 'major' || this.value === 'major-penta' || this.value === 'random') {
-            rootSelect.value = "0"; // C
+            rootSelect.value = "0"; 
         } else {
-            rootSelect.value = "9"; // A
+            rootSelect.value = "9"; 
         }
     });
 
@@ -663,7 +662,6 @@ function generatePool() {
     let selectedScale = document.getElementById('scale-type').value;
     let actualScale = selectedScale;
     
-    // 如果是隨機，則偷偷從 5 個選項中抽一個
     if (selectedScale === 'random') {
         const keys = Object.keys(SCALE_INTERVALS);
         actualScale = keys[Math.floor(Math.random() * keys.length)];
@@ -719,7 +717,7 @@ function initGame() {
     if (uiProgress) uiProgress.innerText = `${currentProgress} / ${TOTAL_TARGETS}`;
     holdFrames = 0; cameraOffsetX = 0; bgOffsetY = 0;
     isFinished = false; scoreSubmitted = false;
-    smoothedCentsOff = null; // 重置平滑值
+    smoothedCentsOff = null; 
     
     centsTolerance = parseInt(document.getElementById('difficulty').value);
     if (tunerSafeZone) {
@@ -786,7 +784,6 @@ function updateAudio() {
     
     if (pitch !== -1) {
         let rawCentsOff = 1200 * Math.log2(pitch / targetFreq);
-        // 指數平滑處理：30% 當前音準，70% 歷史音準。大幅減少人聲顫抖帶來的劇烈跳動
         if (smoothedCentsOff === null) {
             smoothedCentsOff = rawCentsOff;
         } else {
@@ -808,13 +805,11 @@ function updateAudio() {
             if (statusText) { statusText.innerText = "保持高度！準備跳躍！"; statusText.className = "text-xs mt-1 h-3 font-bold text-green-300 drop-shadow-md"; }
         } else {
             if (tunerIndicator) tunerIndicator.style.backgroundColor = Math.abs(centsOff) <= 100 ? '#fbd000' : '#e52521';
-            // 大幅降低懲罰：從原本的 -2 改為 -0.5，走音容錯率提升 4 倍
             holdFrames = Math.max(0, holdFrames - 0.5);
             if (statusText) { statusText.innerText = centsOff > 0 ? "太高了，降落一點" : "太低了，升上去"; statusText.className = "text-xs mt-1 h-3 font-bold text-yellow-300 drop-shadow-md"; }
         }
     } else {
-        smoothedCentsOff = null; // 重置平滑
-        // 大幅降低無聲懲罰：從原本的 -4 改為 -1，讓呼吸或氣息中斷不會瞬間歸零
+        smoothedCentsOff = null; 
         holdFrames = Math.max(0, holdFrames - 1);
         elevator.currentElevatorY = Math.min(ch * 0.9, elevator.y + 3); 
         if (tunerIndicator) { tunerIndicator.style.left = '50%'; tunerIndicator.style.backgroundColor = '#fbd000'; }
