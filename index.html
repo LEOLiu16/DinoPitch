@@ -125,17 +125,48 @@
             </div>
         </div>
         
-        <div class="flex space-x-3 mt-6 w-full max-w-sm justify-center">
-            <button id="start-btn" class="flex-1 bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-2 rounded-full text-lg shadow-[0_6px_0_#166534] transform transition active:translate-y-2 active:shadow-[0_0px_0_#166534] title-font border-2 border-green-800">
+        <div class="flex flex-col space-y-3 mt-6 w-full max-w-sm justify-center">
+            <button id="start-btn" class="w-full bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-2 rounded-full text-xl shadow-[0_6px_0_#166534] transform transition active:translate-y-2 active:shadow-[0_0px_0_#166534] title-font border-2 border-green-800">
                 開始遊戲
             </button>
-            <button id="standalone-lb-btn" class="flex-1 bg-yellow-500 hover:bg-yellow-400 text-white font-bold py-3 px-2 rounded-full text-sm shadow-[0_6px_0_#b45309] transform transition active:translate-y-2 active:shadow-[0_0px_0_#b45309] title-font border-2 border-yellow-800 flex items-center justify-center">
-                🏆 排行榜
-            </button>
+            <div class="flex space-x-3 w-full">
+                <button id="tutorial-btn" class="flex-1 bg-blue-500 hover:bg-blue-400 text-white font-bold py-3 px-2 rounded-full text-sm shadow-[0_6px_0_#1e3a8a] transform transition active:translate-y-2 active:shadow-[0_0px_0_#1e3a8a] title-font border-2 border-blue-800 flex items-center justify-center">
+                    📖 新手指南
+                </button>
+                <button id="standalone-lb-btn" class="flex-1 bg-yellow-500 hover:bg-yellow-400 text-white font-bold py-3 px-2 rounded-full text-sm shadow-[0_6px_0_#b45309] transform transition active:translate-y-2 active:shadow-[0_0px_0_#b45309] title-font border-2 border-yellow-800 flex items-center justify-center">
+                    🏆 排行榜
+                </button>
+            </div>
         </div>
         
         <p class="text-[12px] text-yellow-400 mt-4 tracking-widest font-mono font-bold" id="mic-status-msg"></p>
-        <p class="text-[12px] text-gray-400 mt-2 tracking-widest font-mono font-bold">v1.16 Design by 劉文傑</p>
+        <p class="text-[12px] text-gray-400 mt-2 tracking-widest font-mono font-bold">v1.18 Design by 劉文傑</p>
+    </div>
+
+    <!-- 新手指南畫面 -->
+    <div id="tutorial-screen" class="overlay-screen hidden z-[60]">
+        <h2 class="text-3xl text-blue-400 mb-4 title-font drop-shadow-md">📖 新手指南</h2>
+        
+        <div class="bg-gray-800 p-5 rounded-xl w-full max-w-sm mb-6 border-2 border-gray-600 shadow-lg text-left space-y-4">
+            <div>
+                <h3 class="text-lg text-green-300 font-bold mb-1 border-b border-gray-600 pb-1 title-font">🎯 遊戲目標</h3>
+                <p class="text-gray-200 text-sm leading-relaxed font-bold mt-2">
+                    用「音準」控制暴龍，唱對音就能往前跳，挑戰最快抵達終點！
+                </p>
+            </div>
+            
+            <div>
+                <h3 class="text-lg text-yellow-300 font-bold mb-1 border-b border-gray-600 pb-1 title-font">🕹️ 基本玩法</h3>
+                <ul class="text-gray-200 text-sm space-y-3 leading-relaxed mt-3 list-none pl-1 font-bold">
+                    <li><span class="text-white text-base">🎤 開唱：</span><br>對著麥克風唱出相同的音高。</li>
+                    <li><span class="text-white text-base">🦖 跳躍：</span><br>音準穩定對上，下方「蓄力條」瞬間集滿後，暴龍就會自動跳過去！</li>
+                    <li><span class="text-white text-base">🔊 喇叭按鈕：</span><br>不知道怎麼唱時，點擊聽提示音。</li>
+                </ul>
+            </div>
+        </div>
+        
+        <button id="tutorial-back-btn" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-3 px-10 rounded-full shadow-[0_4px_0_#374151] active:translate-y-1 active:shadow-none border-2 border-gray-800 text-lg title-font transition-all">返回首頁</button>
+        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">v1.18 Design by 劉文傑</p>
     </div>
 
     <div id="standalone-lb-screen" class="overlay-screen hidden z-[60]">
@@ -183,7 +214,7 @@
             </div>
         </div>
         <button id="standalone-lb-back-btn" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-3 px-10 rounded-full shadow-[0_4px_0_#374151] active:translate-y-1 active:shadow-none border-2 border-gray-800 text-lg">返回首頁</button>
-        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">v1.16 Design by 劉文傑</p>
+        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">v1.18 Design by 劉文傑</p>
     </div>
 
     <div id="victory-screen" class="overlay-screen hidden z-[55]">
@@ -218,7 +249,7 @@
             <button id="restart-btn" class="bg-green-500 hover:bg-green-400 text-white font-bold py-3 px-6 rounded-full shadow-[0_4px_0_#166534] active:translate-y-1 active:shadow-none border-2 border-green-800">再挑戰</button>
             <button id="settings-btn" class="bg-gray-500 hover:bg-gray-400 text-white font-bold py-3 px-6 rounded-full shadow-[0_4px_0_#374151] active:translate-y-1 active:shadow-none border-2 border-gray-800">回首頁</button>
         </div>
-        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">v1.16 Design by 劉文傑</p>
+        <p class="text-[12px] text-gray-400 mt-6 tracking-widest font-mono font-bold">v1.18 Design by 劉文傑</p>
     </div>
 
     <!-- 自訂提示框 -->
@@ -506,7 +537,7 @@ dctx.font = '56px "Apple Color Emoji", "Segoe UI Emoji", "Noto Color Emoji", Ari
 dctx.textAlign = 'center'; dctx.textBaseline = 'bottom';
 dctx.fillText('🦖', 60, 100);
 
-let setupScreen, victoryScreen, standaloneLbScreen;
+let setupScreen, victoryScreen, standaloneLbScreen, tutorialScreen;
 let uiTargetNote, uiTimer, uiProgress, uiFinalTime, tunerIndicator, tunerSafeZone, chargeFill, statusText, hintBtn, micStatusMsg;
 
 window.addEventListener('DOMContentLoaded', async () => {
@@ -515,6 +546,7 @@ window.addEventListener('DOMContentLoaded', async () => {
     setupScreen = document.getElementById('setup-screen');
     victoryScreen = document.getElementById('victory-screen');
     standaloneLbScreen = document.getElementById('standalone-lb-screen');
+    tutorialScreen = document.getElementById('tutorial-screen');
     
     uiTargetNote = document.getElementById('target-note-display');
     uiTimer = document.getElementById('timer-display');
@@ -549,6 +581,16 @@ window.addEventListener('DOMContentLoaded', async () => {
     updateTimeoutVisibility();
 
     document.getElementById('start-btn').addEventListener('click', startAudioAndGame);
+    
+    document.getElementById('tutorial-btn').addEventListener('click', () => {
+        setupScreen.classList.add('hidden');
+        tutorialScreen.classList.remove('hidden');
+    });
+    document.getElementById('tutorial-back-btn').addEventListener('click', () => {
+        tutorialScreen.classList.add('hidden');
+        setupScreen.classList.remove('hidden');
+    });
+
     document.getElementById('standalone-lb-btn').addEventListener('click', () => {
         setupScreen.classList.add('hidden'); standaloneLbScreen.classList.remove('hidden');
         renderStandaloneLeaderboard();
@@ -999,6 +1041,8 @@ function initGame() {
         if (targetPlatformsCreated >= TOTAL_TARGETS) break;
         currentX += 160 + Math.random()*30;
         let lastIdx = platforms[platforms.length - 1].poolIdx;
+        
+        // 增量指標必須優先，這樣後續邏輯讀取 Level4 陣列時，才不會出現索引錯位！
         targetPlatformsCreated++;
         
         let next;
@@ -1196,8 +1240,11 @@ function updatePhysics() {
                 if (targetPlatformsCreated < TOTAL_TARGETS) {
                     let lastP = platforms[platforms.length - 1];
                     let nextX = lastP.x + 160 + Math.random()*30;
-                    let next = getNextNoteLogic(lastP.poolIdx);
+                    
+                    // 關鍵修正：計數增加必須在讀取下一個音符前執行
                     targetPlatformsCreated++;
+                    let next = getNextNoteLogic(lastP.poolIdx);
+                    
                     platforms.push({ x: nextX, y: getPlatformY(next.midi), w: PLATFORM_WIDTH, isTarget: false, midi: next.midi, poolIdx: next.poolIdx });
                 }
             }
