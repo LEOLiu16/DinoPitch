@@ -1254,7 +1254,9 @@ function draw() {
         
         let topColor = isElevator ? '#fbd000' : (isTarget ? '#52d94a' : (isGroup ? '#4299e1' : '#cc4c11'));
         let bottomColor = isElevator ? '#e52521' : (isTarget ? '#166534' : (isGroup ? '#2b6cb0' : '#8b3208'));
-        let isFinishLine = (currentProgress + index >= TOTAL_TARGETS && index !== 0);
+        
+        // 修正終點判斷 Bug：直接判斷已創造平台數量是否達到總數，並且是否為陣列中的最後一個平台
+        let isFinishLine = (targetPlatformsCreated >= TOTAL_TARGETS && index === platforms.length - 1 && index !== 0);
         
         ctx.fillStyle = bottomColor; ctx.fillRect(p.x, p.y + PLATFORM_HEIGHT, p.w, ch - p.y);
         ctx.beginPath(); let bH = 20, bW = 40; 
