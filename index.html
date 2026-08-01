@@ -861,7 +861,7 @@ async function startAudioAndGame() {
         btn.disabled = false; btn.innerText = "開始遊戲";
         micStatusMsg.innerText = ""; 
     } catch (err) {
-        micStatusMsg.innerHTML = "🎤 麥克風存取失敗！請確認網址為 https://"; 
+        micStatusMsg.innerHTML = "🎤 失敗！請以預設瀏覽器打開"; 
         micStatusMsg.classList.remove('text-yellow-400'); micStatusMsg.classList.add('text-red-400');
         btn.disabled = false; btn.innerText = "重試";
     }
