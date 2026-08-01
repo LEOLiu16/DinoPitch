@@ -1000,7 +1000,15 @@ function initGame() {
         currentX += 160 + Math.random()*30;
         let lastIdx = platforms[platforms.length - 1].poolIdx;
         targetPlatformsCreated++;
-        let next = getNextNoteLogic(lastIdx);
+        
+        let next;
+        if (i === 1 && playMode !== '4') {
+            // 強制將第一個目標平台 (i=1) 設定為基準根音
+            next = { midi: rootMidi, poolIdx: rootIdx };
+        } else {
+            next = getNextNoteLogic(lastIdx);
+        }
+        
         platforms.push({ x: currentX, y: getPlatformY(next.midi), w: PLATFORM_WIDTH, isTarget: (i === 1), midi: next.midi, poolIdx: next.poolIdx });
     }
     
